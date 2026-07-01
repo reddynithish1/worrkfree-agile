@@ -262,7 +262,7 @@ export default function App() {
 
   if (isAuthLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-900 text-white">
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-950 text-white">
         <div className="animate-pulse flex flex-col items-center">
           <div className="w-12 h-12 bg-blue-600/90 rounded-xl mb-4 flex items-center justify-center font-bold text-xl">W</div>
           <div className="text-xl font-bold">Loading WorrkFree...</div>
@@ -279,16 +279,12 @@ export default function App() {
     <>
       {/* Dynamic Animated Glass Backdrop blobs */}
       <div className="glass-bg-wrapper">
-        <div className="bg-blob blob-1" />
-        <div className="bg-blob blob-2" />
-        <div className="bg-blob blob-3" />
-        <div className="bg-blob blob-4" />
-      </div>
+        </div>
 
-      <div className="flex h-screen w-screen overflow-hidden bg-transparent text-slate-800 font-sans relative z-10" id="main-app">
+      <div className="flex h-screen w-screen overflow-hidden bg-transparent text-slate-200 font-sans relative z-10" id="main-app">
         
         {/* LEFT NAVIGATION COLUMN (SIDEBAR) */}
-        <div className="w-64 glass-sidebar text-slate-800 flex flex-col justify-between shrink-0 p-5 space-y-6 relative z-10">
+        <div className="w-64 glass-sidebar text-slate-200 flex flex-col justify-between shrink-0 p-5 space-y-6 relative z-10">
           
           <div className="space-y-6">
             {/* Logo segment */}
@@ -296,7 +292,7 @@ export default function App() {
               <div className="w-8 h-8 bg-blue-600/90 rounded-lg flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/25">
                 {currentProject ? currentProject.key.substring(0, 1) : "W"}
               </div>
-              <span className="font-bold text-base tracking-tight text-slate-800">
+              <span className="font-bold text-base tracking-tight text-slate-200">
                 WorrkFree
               </span>
             </div>
@@ -315,13 +311,13 @@ export default function App() {
               </div>
 
               {currentProject ? (
-                <div className="relative group px-3 py-2.5 bg-white/40 hover:bg-white/60 rounded-xl shadow-xs border border-white/40 flex items-center justify-between transition-all backdrop-blur-md">
+                <div className="relative group px-3 py-2.5 bg-white/10 hover:bg-white/15 rounded-xl shadow-xs border border-white/10 flex items-center justify-between transition-all backdrop-blur-md">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 bg-blue-600/90 rounded font-bold text-xs text-white flex items-center justify-center shadow-xs">
                       {currentProject.key}
                     </div>
                     <div className="min-w-0">
-                      <span className="block font-bold text-xs text-slate-800 truncate">{currentProject.name}</span>
+                      <span className="block font-bold text-xs text-slate-200 truncate">{currentProject.name}</span>
                       <span className="block text-[9px] text-slate-500 tracking-wider font-semibold">Key: {currentProject.key}</span>
                     </div>
                   </div>
@@ -354,8 +350,8 @@ export default function App() {
                   onClick={() => setActiveTab("board")}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     activeTab === "board"
-                      ? "bg-white/60 text-slate-900 shadow-sm border border-white/50 backdrop-blur-md"
-                      : "text-slate-600 hover:bg-white/20 hover:text-slate-900"
+                      ? "bg-white/15 text-slate-50 shadow-sm border border-white/10 backdrop-blur-md"
+                      : "text-slate-400 hover:bg-white/10 hover:text-slate-50"
                   }`}
                 >
                   <LayoutGrid className={`w-4 h-4 ${activeTab === "board" ? "text-blue-600" : "text-slate-400"}`} />
@@ -366,8 +362,8 @@ export default function App() {
                   onClick={() => setActiveTab("backlog")}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     activeTab === "backlog"
-                      ? "bg-white/60 text-slate-900 shadow-sm border border-white/50 backdrop-blur-md"
-                      : "text-slate-600 hover:bg-white/20 hover:text-slate-900"
+                      ? "bg-white/15 text-slate-50 shadow-sm border border-white/10 backdrop-blur-md"
+                      : "text-slate-400 hover:bg-white/10 hover:text-slate-50"
                   }`}
                 >
                   <Database className={`w-4 h-4 ${activeTab === "backlog" ? "text-blue-600" : "text-slate-400"}`} />
@@ -378,8 +374,8 @@ export default function App() {
                   onClick={() => setActiveTab("copilot")}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     activeTab === "copilot"
-                      ? "bg-white/60 text-slate-900 shadow-sm border border-white/50 backdrop-blur-md"
-                      : "text-slate-600 hover:bg-white/20 hover:text-slate-900"
+                      ? "bg-white/15 text-slate-50 shadow-sm border border-white/10 backdrop-blur-md"
+                      : "text-slate-400 hover:bg-white/10 hover:text-slate-50"
                   }`}
                 >
                   <Sparkles className={`w-4 h-4 ${activeTab === "copilot" ? "text-amber-500 fill-amber-100" : "text-slate-400"}`} />
@@ -390,8 +386,8 @@ export default function App() {
                   onClick={() => setActiveTab("insights")}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     activeTab === "insights"
-                      ? "bg-white/60 text-slate-900 shadow-sm border border-white/50 backdrop-blur-md"
-                      : "text-slate-600 hover:bg-white/20 hover:text-slate-900"
+                      ? "bg-white/15 text-slate-50 shadow-sm border border-white/10 backdrop-blur-md"
+                      : "text-slate-400 hover:bg-white/10 hover:text-slate-50"
                   }`}
                 >
                   <BarChart2 className={`w-4 h-4 ${activeTab === "insights" ? "text-blue-600" : "text-slate-400"}`} />
@@ -402,7 +398,7 @@ export default function App() {
           </div>
 
           {/* Footer info segment */}
-          <div className="flex items-center space-x-3 p-3 bg-white/30 rounded-2xl border border-white/20 backdrop-blur-md shadow-xs">
+          <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-md shadow-xs">
             <img
               src={currentUser.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
               alt={`${currentUser.name} profile`}
@@ -410,7 +406,7 @@ export default function App() {
               referrerPolicy="no-referrer"
             />
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-slate-800 truncate">{currentUser.name}</div>
+              <div className="text-xs font-bold text-slate-200 truncate">{currentUser.name}</div>
               <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{currentUser.email}</div>
             </div>
             <button
@@ -419,7 +415,7 @@ export default function App() {
                 setCurrentUser(null);
               }}
               title="Logout"
-              className="p-1.5 hover:bg-white/40 rounded-lg text-slate-500 hover:text-rose-500 transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded-lg text-slate-500 hover:text-rose-500 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -482,7 +478,7 @@ export default function App() {
               )}
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl m-6 text-slate-500">
+            <div className="flex-1 flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl m-6 text-slate-500">
               Create an agile project on the sidebar selector to get started.
             </div>
           )}
@@ -511,14 +507,14 @@ export default function App() {
         {/* NEW PROJECT INLINE MODAL DIALOG */}
         {isNewProjectOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
-            <div className="glass-panel rounded-3xl shadow-2xl border border-white/40 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between px-6 py-4 bg-white/20 text-slate-800 border-b border-white/20">
+            <div className="glass-panel rounded-3xl shadow-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 bg-white/10 text-slate-200 border-b border-white/10">
                 <h3 className="font-bold flex items-center gap-2">
                   <Folder className="w-5 h-5 text-blue-600" /> Create New Agile Project
                 </h3>
                 <button 
                   onClick={() => setIsNewProjectOpen(false)}
-                  className="p-1 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
+                  className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
                 >
                   <X className="w-5.5 h-5.5 text-slate-500" />
                 </button>
@@ -583,11 +579,11 @@ export default function App() {
                   />
                 </div>
 
-                <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/20">
+                <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => setIsNewProjectOpen(false)}
-                    className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>

@@ -149,9 +149,9 @@ export default function BacklogView({
   const getStatusBadgeClass = (status: IssueStatus) => {
     switch (status) {
       case "Backlog":
-        return "bg-white/30 text-slate-500 border-white/20";
+        return "bg-white/10 text-slate-500 border-white/10";
       case "To Do":
-        return "bg-white/30 text-slate-500 border-white/20";
+        return "bg-white/10 text-slate-500 border-white/10";
       case "In Progress":
         return "bg-blue-600/10 text-blue-600 border-blue-600/25";
       case "In Review":
@@ -159,19 +159,19 @@ export default function BacklogView({
       case "Done":
         return "bg-emerald-600/10 text-emerald-600 border-emerald-600/25";
       default:
-        return "bg-white/30 text-slate-500 border-white/20";
+        return "bg-white/10 text-slate-500 border-white/10";
     }
   };
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-y-auto" id="backlog-workspace">
       {/* Page Header */}
-      <div className="px-6 py-5 bg-white/25 backdrop-blur-md border-b border-white/20 shadow-xs flex items-center justify-between">
+      <div className="px-6 py-5 bg-white/25 backdrop-blur-md border-b border-white/10 shadow-xs flex items-center justify-between">
         <div>
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
             Agile Backlog
           </div>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight mt-0.5">
+          <h1 className="text-xl font-bold text-slate-200 tracking-tight mt-0.5">
             Backlog Planner
           </h1>
           <p className="text-xs text-slate-500 mt-1 italic font-semibold">
@@ -195,8 +195,8 @@ export default function BacklogView({
       <div className="p-6 space-y-6 max-w-6xl mx-auto w-full">
         {/* Sprint Creator Form (Collapsible Panel) */}
         {isCreatingSprint && (
-          <div className="glass-panel rounded-3xl p-5 shadow-lg animate-in fade-in duration-200 border-white/40">
-            <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+          <div className="glass-panel rounded-3xl p-5 shadow-lg animate-in fade-in duration-200 border-white/10">
+            <h3 className="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
               <Calendar className="w-4.5 h-4.5 text-blue-600" /> Plan Upcoming Sprint
             </h3>
             <form onSubmit={handleCreateSprintSubmit} className="space-y-4">
@@ -253,11 +253,11 @@ export default function BacklogView({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/20">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsCreatingSprint(false)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -302,7 +302,7 @@ export default function BacklogView({
               getStatusBadgeClass={getStatusBadgeClass}
             />
           ) : (
-            <div className="bg-white/25 backdrop-blur-md border border-dashed border-white/30 rounded-2xl p-6 text-center text-sm text-slate-500 font-semibold shadow-xs">
+            <div className="bg-white/25 backdrop-blur-md border border-dashed border-white/10 rounded-2xl p-6 text-center text-sm text-slate-500 font-semibold shadow-xs">
               There is no currently active sprint. Start one of your planned sprints below.
             </div>
           )}
@@ -386,11 +386,11 @@ export default function BacklogView({
                 const sIssues = getSprintIssues(sprint.id);
                 const sMetrics = getSprintMetrics(sprint.id);
                 return (
-                  <div key={sprint.id} className="bg-white/30 backdrop-blur-md rounded-2xl border border-white/20 p-4 flex items-center justify-between text-xs text-slate-600 shadow-2xs">
+                  <div key={sprint.id} className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-4 flex items-center justify-between text-xs text-slate-400 shadow-2xs">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span className="font-bold text-slate-800">{sprint.name}</span>
-                      <span className="text-[10px] bg-white/50 border border-white/30 px-1.5 py-0.5 rounded-full text-slate-500 font-semibold shadow-2xs">
+                      <span className="font-bold text-slate-200">{sprint.name}</span>
+                      <span className="text-[10px] bg-white/10 border border-white/10 px-1.5 py-0.5 rounded-full text-slate-500 font-semibold shadow-2xs">
                         Goal achieved
                       </span>
                     </div>
@@ -463,14 +463,14 @@ function SprintContainer({
   const isBacklog = sprint === null;
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 overflow-hidden shadow-2xs">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-2xs">
       {/* Sprint Header Row */}
-      <div className="px-4 py-3 bg-white/20 border-b border-white/30 flex flex-wrap items-center justify-between gap-3 select-none">
+      <div className="px-4 py-3 bg-white/10 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 select-none">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => !isBacklog && onToggleCollapse()}>
           {!isBacklog && (
             isCollapsed ? <ChevronRight className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />
           )}
-          <span className="font-bold text-slate-800 text-sm">
+          <span className="font-bold text-slate-200 text-sm">
             {isBacklog ? "Product Backlog" : sprint.name}
           </span>
           <span className="text-[11px] font-semibold text-slate-500">
@@ -488,15 +488,15 @@ function SprintContainer({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs">
             <span className="w-2.5 h-2.5 rounded-full bg-slate-400" title="To Do" />
-            <span className="font-bold text-slate-700">{metrics.todoPoints}</span>
+            <span className="font-bold text-slate-300">{metrics.todoPoints}</span>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" title="In Progress & Review" />
-            <span className="font-bold text-slate-700">{metrics.progressPoints}</span>
+            <span className="font-bold text-slate-300">{metrics.progressPoints}</span>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" title="Done" />
             <span className="font-bold text-emerald-600">{metrics.donePoints}</span>
             <span className="text-slate-500 font-normal ml-1">SP total</span>
           </div>
 
-          <div className="h-4 w-[1px] bg-white/20 hidden sm:block" />
+          <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
 
           {/* Header Actions */}
           {!isBacklog && (
@@ -515,7 +515,7 @@ function SprintContainer({
                   onClick={(e) => { e.stopPropagation(); onStartSprint(); }}
                   className={`flex items-center gap-1 px-3 py-1 text-white text-[11px] font-bold rounded-full transition-all shadow-2xs ${
                     disableStart 
-                      ? "bg-white/10 text-slate-400 border border-white/20 cursor-not-allowed" 
+                      ? "bg-white/10 text-slate-400 border border-white/10 cursor-not-allowed" 
                       : "glass-button-primary hover:scale-105"
                   }`}
                   title={disableStart ? "You can only run one active sprint at a time" : "Start this sprint now"}
@@ -540,7 +540,7 @@ function SprintContainer({
               <div
                 key={issue.id}
                 onClick={() => onOpenIssueDetail(issue)}
-                className="px-4 py-2.5 bg-white/30 hover:bg-white/50 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 cursor-pointer text-xs"
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/10 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 cursor-pointer text-xs"
               >
                 {/* Left cell: Type, Key, Summary */}
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -548,7 +548,7 @@ function SprintContainer({
                   <span className="font-bold text-slate-500 tracking-tight shrink-0 select-all">
                     {issue.key}
                   </span>
-                  <span className="text-slate-800 font-semibold truncate">
+                  <span className="text-slate-200 font-semibold truncate">
                     {issue.summary}
                   </span>
                 </div>
@@ -564,7 +564,7 @@ function SprintContainer({
                   <span>{getPriorityIcon(issue.priority)}</span>
 
                   {/* Story point badge */}
-                  <span className="w-5 h-5 rounded-full bg-white/40 border border-white/20 text-slate-600 flex items-center justify-center font-bold text-[10px]">
+                  <span className="w-5 h-5 rounded-full bg-white/10 border border-white/10 text-slate-400 flex items-center justify-center font-bold text-[10px]">
                     {issue.storyPoints || "-"}
                   </span>
 
@@ -585,7 +585,7 @@ function SprintContainer({
                         const target = e.target.value === "backlog" ? null : e.target.value;
                         onMoveIssue(issue.id, target);
                       }}
-                      className="px-2 py-0.5 text-[10px] font-bold bg-white/50 border border-white/30 rounded-lg text-slate-600 cursor-pointer hover:border-blue-500 transition-all focus:outline-hidden"
+                      className="px-2 py-0.5 text-[10px] font-bold bg-white/10 border border-white/10 rounded-lg text-slate-400 cursor-pointer hover:border-blue-500 transition-all focus:outline-hidden"
                     >
                       <option value="backlog">Backlog</option>
                       {allSprints
@@ -603,7 +603,7 @@ function SprintContainer({
           )}
 
           {/* Quick Issue Creator row inside this list container */}
-          <div className="px-4 py-2.5 bg-white/10 border-t border-white/20">
+          <div className="px-4 py-2.5 bg-white/10 border-t border-white/10">
             {activeCreatorSprintId === sprintId ? (
               <div className="flex items-center gap-2 animate-in slide-in-from-top-1 duration-150">
                 <select
@@ -626,7 +626,7 @@ function SprintContainer({
                       onAddIssue(sprintId);
                     }
                   }}
-                  className="flex-1 px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white/50"
+                  className="flex-1 px-3 py-1.5 text-xs glass-input rounded-xl text-slate-200 placeholder:text-slate-400 focus:bg-white/10"
                   autoFocus
                 />
                 <button
@@ -637,7 +637,7 @@ function SprintContainer({
                 </button>
                 <button
                   onClick={() => setActiveCreatorSprintId(undefined)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

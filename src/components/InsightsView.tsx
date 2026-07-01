@@ -89,7 +89,7 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
         <div className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">
           <BarChart2 className="w-3.5 h-3.5 text-blue-600" /> Metrics & Analytics
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight mt-1">
+        <h1 className="text-2xl font-bold text-slate-200 tracking-tight mt-1">
           Agile Insights Dashboard
         </h1>
         <p className="text-xs text-slate-500 mt-1 italic font-semibold">
@@ -101,48 +101,48 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
 
         {/* 1. AGGREGATE SUMMARY CARDS GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-5 shadow-xs flex items-center gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-xs flex items-center gap-4">
             <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl">
               <BarChart2 className="w-5 h-5" />
             </div>
             <div>
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Scope</div>
-              <div className="text-lg font-bold text-slate-800">{totalPoints} Story Points</div>
+              <div className="text-lg font-bold text-slate-200">{totalPoints} Story Points</div>
               <div className="text-[10px] text-slate-500 font-semibold">{projectIssues.length} issues tracked</div>
             </div>
           </div>
 
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-5 shadow-xs flex items-center gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-xs flex items-center gap-4">
             <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Completed Points</div>
-              <div className="text-lg font-bold text-slate-800">{donePoints} Story Points</div>
+              <div className="text-lg font-bold text-slate-200">{donePoints} Story Points</div>
               <div className="text-[10px] text-emerald-600 font-bold">
                 {totalPoints > 0 ? Math.round((donePoints / totalPoints) * 100) : 0}% completion velocity
               </div>
             </div>
           </div>
 
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-5 shadow-xs flex items-center gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-xs flex items-center gap-4">
             <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl">
               <Clock className="w-5 h-5" />
             </div>
             <div>
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Logged Effort</div>
-              <div className="text-lg font-bold text-slate-800">{totalHoursLogged} Hours</div>
+              <div className="text-lg font-bold text-slate-200">{totalHoursLogged} Hours</div>
               <div className="text-[10px] text-slate-500 font-semibold">{allWorkLogs.length} audit sessions</div>
             </div>
           </div>
 
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-5 shadow-xs flex items-center gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-xs flex items-center gap-4">
             <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl">
               <Users className="w-5 h-5" />
             </div>
             <div>
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Active Sprints</div>
-              <div className="text-lg font-bold text-slate-800">{projectSprints.length} Planned</div>
+              <div className="text-lg font-bold text-slate-200">{projectSprints.length} Planned</div>
               <div className="text-[10px] text-amber-600 font-bold">
                 {projectSprints.filter(s => s.status === "active").length} active sprint running
               </div>
@@ -154,15 +154,15 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* Active Sprint Burnup progress bar distribution */}
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-6 shadow-xs flex flex-col justify-between">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-xs flex flex-col justify-between">
             <div>
-              <h3 className="font-bold text-slate-800 text-sm mb-1">Sprint Progress Bar</h3>
+              <h3 className="font-bold text-slate-200 text-sm mb-1">Sprint Progress Bar</h3>
               <p className="text-xs text-slate-500 mb-4 leading-relaxed font-semibold">Percentage breakdown of story points inside all tracked columns.</p>
             </div>
 
             <div className="space-y-4">
               {/* Giant composite bar */}
-              <div className="h-6 w-full rounded-full overflow-hidden flex bg-white/20 border border-white/20">
+              <div className="h-6 w-full rounded-full overflow-hidden flex bg-white/10 border border-white/10">
                 {donePoints > 0 && (
                   <div
                     style={{ width: `${(donePoints / (totalPoints || 1)) * 100}%` }}
@@ -192,7 +192,7 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                   <div>
                     <span className="block font-bold">Done</span>
-                    <strong className="text-slate-800 font-bold">{donePoints} SP</strong>
+                    <strong className="text-slate-200 font-bold">{donePoints} SP</strong>
                   </div>
                 </div>
 
@@ -200,15 +200,15 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                   <div>
                     <span className="block font-bold">Active</span>
-                    <strong className="text-slate-800 font-bold">{progressPoints} SP</strong>
+                    <strong className="text-slate-200 font-bold">{progressPoints} SP</strong>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 p-2 bg-white/30 rounded-xl border border-white/20 text-slate-500">
+                <div className="flex items-center gap-1.5 p-2 bg-white/10 rounded-xl border border-white/10 text-slate-500">
                   <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                   <div>
                     <span className="block font-bold">Planned</span>
-                    <strong className="text-slate-800 font-bold">{todoPoints} SP</strong>
+                    <strong className="text-slate-200 font-bold">{todoPoints} SP</strong>
                   </div>
                 </div>
               </div>
@@ -216,43 +216,43 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
           </div>
 
           {/* Issue Type Distribution Donut SVG */}
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-6 shadow-xs flex flex-col md:flex-row md:items-center gap-6">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-xs flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1">
-              <h3 className="font-bold text-slate-800 text-sm mb-1">Issue Types</h3>
+              <h3 className="font-bold text-slate-200 text-sm mb-1">Issue Types</h3>
               <p className="text-xs text-slate-500 mb-4 leading-relaxed font-semibold">Visual breakdown of scope profile.</p>
 
               {/* Donut Legend */}
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                  <div className="flex items-center gap-1.5 text-slate-400 font-bold">
                     <span className="w-3 h-3 bg-slate-700 rounded-sm" />
                     <span>Epic Tasks</span>
                   </div>
-                  <strong className="text-slate-800 font-bold">{epics.length} ({epicPct})%</strong>
+                  <strong className="text-slate-200 font-bold">{epics.length} ({epicPct})%</strong>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                  <div className="flex items-center gap-1.5 text-slate-400 font-bold">
                     <span className="w-3 h-3 bg-emerald-500 rounded-sm" />
                     <span>User Stories</span>
                   </div>
-                  <strong className="text-slate-800 font-bold">{stories.length} ({storyPct}%)</strong>
+                  <strong className="text-slate-200 font-bold">{stories.length} ({storyPct}%)</strong>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                  <div className="flex items-center gap-1.5 text-slate-400 font-bold">
                     <span className="w-3 h-3 bg-amber-500 rounded-sm" />
                     <span>Engineering Tasks</span>
                   </div>
-                  <strong className="text-slate-800 font-bold">{tasks.length} ({taskPct}%)</strong>
+                  <strong className="text-slate-200 font-bold">{tasks.length} ({taskPct}%)</strong>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                  <div className="flex items-center gap-1.5 text-slate-400 font-bold">
                     <span className="w-3 h-3 bg-rose-500 rounded-sm" />
                     <span>Defects / Bugs</span>
                   </div>
-                  <strong className="text-slate-800 font-bold">{bugs.length} ({bugPct}%)</strong>
+                  <strong className="text-slate-200 font-bold">{bugs.length} ({bugPct}%)</strong>
                 </div>
               </div>
             </div>
@@ -305,7 +305,7 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
               </svg>
               {/* Inner core display */}
               <div className="absolute text-center">
-                <span className="block text-xl font-extrabold text-slate-800">{projectIssues.length}</span>
+                <span className="block text-xl font-extrabold text-slate-200">{projectIssues.length}</span>
                 <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Issues</span>
               </div>
             </div>
@@ -315,8 +315,8 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
         </div>
 
         {/* 3. VELOCITY BAR GRAPH (SVG COMPOSITE) */}
-        <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-6 shadow-xs">
-          <h3 className="font-bold text-slate-800 text-sm mb-1">Sprint Velocity & Estimates</h3>
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-xs">
+          <h3 className="font-bold text-slate-200 text-sm mb-1">Sprint Velocity & Estimates</h3>
           <p className="text-xs text-slate-500 mb-6 leading-relaxed font-semibold">Comparison of total story points in each planned and active sprint, showing Done vs Total.</p>
 
           <div className="space-y-4">
@@ -329,17 +329,17 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
                 return (
                   <div key={index} className="space-y-1.5 text-xs">
                     <div className="flex items-center justify-between font-semibold">
-                      <span className="text-slate-800 font-bold">{data.name} ({data.status})</span>
+                      <span className="text-slate-200 font-bold">{data.name} ({data.status})</span>
                       <span className="text-slate-500">
                         <strong className="text-blue-600 font-bold">{data.donePoints} SP</strong> / {data.totalPoints} SP done
                       </span>
                     </div>
 
-                    <div className="h-4.5 w-full bg-white/20 rounded-full overflow-hidden relative border border-white/20">
+                    <div className="h-4.5 w-full bg-white/10 rounded-full overflow-hidden relative border border-white/10">
                       {/* total points range bar background */}
                       <div
                         style={{ width: `${Math.min(100, (data.totalPoints / 30) * 100)}%` }}
-                        className="h-full bg-white/40"
+                        className="h-full bg-white/10"
                       >
                         {/* done segment */}
                         <div
@@ -361,10 +361,10 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
         </div>
 
         {/* 4. CHRONICLED WORK LOG TABLE */}
-        <div className="bg-white/20 border border-white/30 backdrop-blur-md rounded-2xl overflow-hidden shadow-xs">
-          <div className="px-5 py-4.5 border-b border-white/20 bg-white/10 text-slate-800 flex items-center justify-between">
+        <div className="bg-white/10 border border-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-xs">
+          <div className="px-5 py-4.5 border-b border-white/10 bg-white/10 text-slate-200 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-sm tracking-tight text-slate-800">Work Log Diagnostic Audit</h3>
+              <h3 className="font-bold text-sm tracking-tight text-slate-200">Work Log Diagnostic Audit</h3>
               <p className="text-[10px] text-slate-500 font-bold">Detailed logs submitted by team developers</p>
             </div>
             <span className="text-xs bg-blue-600 text-white font-bold px-3.5 py-1.5 rounded-full shadow-xs">
@@ -380,7 +380,7 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-white/20 border-b border-white/20 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                  <tr className="bg-white/10 border-b border-white/10 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     <th className="p-3.5">Issue</th>
                     <th className="p-3.5">Developer</th>
                     <th className="p-3.5">Logged Time</th>
@@ -390,11 +390,11 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
                 </thead>
                 <tbody className="divide-y divide-white/20">
                   {allWorkLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-white/30 transition-colors">
+                    <tr key={log.id} className="hover:bg-white/10 transition-colors">
                       <td className="p-3.5 font-bold text-blue-600 whitespace-nowrap">
                         {log.issueKey}
                       </td>
-                      <td className="p-3.5 font-bold text-slate-800">
+                      <td className="p-3.5 font-bold text-slate-200">
                         {log.author}
                       </td>
                       <td className="p-3.5">
@@ -402,7 +402,7 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
                           {log.hoursLogged} hours
                         </span>
                       </td>
-                      <td className="p-3.5 text-slate-600 italic font-semibold">
+                      <td className="p-3.5 text-slate-400 italic font-semibold">
                         "{log.description}"
                       </td>
                       <td className="p-3.5 text-slate-500 text-right whitespace-nowrap font-bold">

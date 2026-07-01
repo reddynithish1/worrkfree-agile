@@ -191,11 +191,11 @@ export default function AICopilot({
   return (
     <div className="flex-1 overflow-y-auto bg-transparent scrollbar-thin" id="ai-copilot-workspace">
       {/* Page Header */}
-      <div className="px-6 py-4.5 bg-white/25 backdrop-blur-md border-b border-white/20">
+      <div className="px-6 py-4.5 bg-white/25 backdrop-blur-md border-b border-white/10">
         <div className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">
           <Sparkles className="w-3.5 h-3.5 animate-pulse text-blue-600" /> Agile AI Copilot
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight mt-1">
+        <h1 className="text-2xl font-bold text-slate-200 tracking-tight mt-1">
           Scrum AI Assistant & Roadmapper
         </h1>
         <p className="text-xs text-slate-500 mt-1 italic font-semibold">
@@ -209,8 +209,8 @@ export default function AICopilot({
         <div className="md:col-span-7 space-y-6">
           
           {/* Form */}
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-6 shadow-2xs">
-            <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-1.5 text-sm">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-2xs">
+            <h3 className="font-bold text-slate-200 mb-1 flex items-center gap-1.5 text-sm">
               <Sparkles className="w-4.5 h-4.5 text-blue-600" /> Sprint Goals AI Roadmapper
             </h3>
             <p className="text-xs text-slate-500 mb-4 leading-relaxed font-semibold">
@@ -243,17 +243,17 @@ export default function AICopilot({
 
           {/* Proposal loading status */}
           {loading && (
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-8 text-center shadow-2xs animate-pulse">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-8 text-center shadow-2xs animate-pulse">
               <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
-              <h4 className="font-bold text-slate-800 text-sm">WorrkFree Ai is working...</h4>
+              <h4 className="font-bold text-slate-200 text-sm">WorrkFree Ai is working...</h4>
               <p className="text-xs text-slate-500 mt-1.5 font-semibold">{loadingStep}</p>
             </div>
           )}
 
           {/* Proposal Review List */}
           {proposedIssues.length > 0 && (
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 overflow-hidden shadow-xs animate-in fade-in duration-300">
-              <div className="px-5 py-4 bg-white/20 border-b border-white/30 text-slate-800 flex items-center justify-between">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-xs animate-in fade-in duration-300">
+              <div className="px-5 py-4 bg-white/10 border-b border-white/10 text-slate-200 flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-xs uppercase tracking-widest text-blue-600">Review Proposed Roadmap</h4>
                   <p className="text-[10px] text-slate-500 mt-0.5 font-semibold">Generated {proposedIssues.length} issues for your backlog</p>
@@ -268,19 +268,19 @@ export default function AICopilot({
 
               <div className="divide-y divide-white/20 max-h-[480px] overflow-y-auto scrollbar-thin">
                 {proposedIssues.map((issue, index) => (
-                  <div key={index} className="p-4 bg-white/30 hover:bg-white/50 transition-colors">
+                  <div key={index} className="p-4 bg-white/10 hover:bg-white/10 transition-colors">
                     <div className="flex items-start justify-between gap-3 mb-1.5">
                       <div className="flex items-center gap-2">
                         <span>{getIssueTypeIcon(issue.issueType)}</span>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{issue.issueType}</span>
-                        <h5 className="font-bold text-slate-800 text-xs">{issue.summary}</h5>
+                        <h5 className="font-bold text-slate-200 text-xs">{issue.summary}</h5>
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-full border font-bold text-[9px] ${getPriorityBadgeColor(issue.priority)}`}>
                         {issue.priority}
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-600 leading-relaxed pl-6 italic mb-2">
+                    <p className="text-xs text-slate-400 leading-relaxed pl-6 italic mb-2">
                       {issue.description}
                     </p>
 
@@ -300,8 +300,8 @@ export default function AICopilot({
         {/* RIGHT COLUMN: PM Health check & standup assistant (5 columns) */}
         <div className="md:col-span-5 space-y-6">
           
-          <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 p-6 shadow-2xs">
-            <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-1.5 text-sm">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-2xs">
+            <h3 className="font-bold text-slate-200 mb-1 flex items-center gap-1.5 text-sm">
               <Clipboard className="w-4.5 h-4.5 text-blue-600" /> Scrum Coach Audit
             </h3>
             <p className="text-xs text-slate-500 mb-4 leading-relaxed font-semibold">
@@ -319,12 +319,12 @@ export default function AICopilot({
 
           {/* Heuristic Audit Output */}
           {healthFeedback && (
-            <div className="bg-white/30 backdrop-blur-md text-slate-800 rounded-2xl p-6 shadow-xs border border-white/20 animate-in slide-in-from-bottom-2 duration-300">
-              <div className="prose prose-xs leading-relaxed space-y-3 font-semibold text-xs text-slate-600">
+            <div className="bg-white/10 backdrop-blur-md text-slate-200 rounded-2xl p-6 shadow-xs border border-white/10 animate-in slide-in-from-bottom-2 duration-300">
+              <div className="prose prose-xs leading-relaxed space-y-3 font-semibold text-xs text-slate-400">
                 {/* Visual markdown formatter */}
                 {healthFeedback.split("\n").map((line, idx) => {
                   if (line.startsWith("### ")) {
-                    return <h3 key={idx} className="text-sm font-bold text-blue-600 mt-4 first:mt-0 pb-1 border-b border-white/20">{line.replace("### ", "")}</h3>;
+                    return <h3 key={idx} className="text-sm font-bold text-blue-600 mt-4 first:mt-0 pb-1 border-b border-white/10">{line.replace("### ", "")}</h3>;
                   }
                   if (line.startsWith("#### ")) {
                     return <h4 key={idx} className="text-xs font-bold text-amber-600 mt-3">{line.replace("#### ", "")}</h4>;

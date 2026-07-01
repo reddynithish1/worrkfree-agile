@@ -43,7 +43,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
   };
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-slate-900 relative overflow-hidden z-50">
+    <div className="flex h-screen w-screen items-center justify-center bg-slate-950 relative overflow-hidden z-50">
       {/* Background blobs for aesthetic */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-2000" />
