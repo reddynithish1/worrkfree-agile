@@ -3,7 +3,8 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
-import { createUser, verifyUser, getUsers, updateUser } from "./src/db/authDb";
+import { createUser, verifyUser, getUsers, updateUser, joinUserToProject } from "./src/db/authDb";
+import { createProject, joinProject, getProjectMembers, getInviteCode } from "./src/db/projectDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
@@ -217,7 +218,78 @@ app.patch("/api/user/profile", authenticateToken, async (req: any, res: any) => 
   }
 });
 
-// 2. AI Endpoint: Estimate story points with a rationale
+// Create Project
+app.post("/api/projects", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const { id, name, key, description } = req.body;
+    
+    if (!name || !key) return res.status(400).json({ error: "Name and key are required" });
+    
+    const projectId = id || `proj-${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+    const project = createProject(projectId, name, key, description, userId);
+    
+    // Add to user's joinedProjects
+    joinUserToProject(userId, project.id);
+    
+    res.json(project);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Join Project via Invite Code
+app.post("/api/projects/join", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const { inviteCode } = req.body;
+    
+    if (!inviteCode) return res.status(400).json({ error: "Invite code is required" });
+    
+    const project = joinProject(inviteCode, userId);
+    joinUserToProject(userId, project.id);
+    
+    res.json(project);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get Project Members
+app.get("/api/projects/:id/members", authenticateToken, async (req: any, res: any) => {
+  try {
+    const members = getProjectMembers(req.params.id);
+    // Enrich with user data (name, avatar)
+    const allUsers = getUsers();
+    const enrichedMembers = members.map(m => {
+      const u = allUsers.find(user => user.id === m.userId);
+      return {
+        ...m,
+        name: u?.name || "Unknown User",
+        avatar: u?.avatar || ""
+      };
+    });
+    res.json(enrichedMembers);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get Invite Code
+app.get("/api/projects/:id/invite-code", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const code = getInviteCode(req.params.id, userId);
+    
+    if (!code) return res.status(403).json({ error: "Not authorized to view invite code" });
+    
+    res.json({ inviteCode: code });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Issues endpoints: Estimate story points with a rationale
 app.post("/api/ai/estimate-points", authenticateToken, async (req, res) => {
   try {
     const { title, description, issueType } = req.body;

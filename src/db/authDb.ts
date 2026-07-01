@@ -39,7 +39,8 @@ export async function createUser(email: string, passwordPlain: string, name: str
     name,
     email,
     passwordHash: hashedPassword,
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    joinedProjects: []
   };
 
   users.push(newUser);
@@ -104,6 +105,22 @@ export async function updateUser(
     id: user.id,
     name: user.name,
     email: user.email,
-    avatar: user.avatar
+    avatar: user.avatar,
+    joinedProjects: user.joinedProjects
   };
+}
+
+export function joinUserToProject(userId: string, projectId: string) {
+  const users = getUsers();
+  const index = users.findIndex(u => u.id === userId);
+  
+  if (index !== -1) {
+    const user = users[index];
+    if (!user.joinedProjects) user.joinedProjects = [];
+    if (!user.joinedProjects.includes(projectId)) {
+      user.joinedProjects.push(projectId);
+      users[index] = user;
+      saveUsers(users);
+    }
+  }
 }

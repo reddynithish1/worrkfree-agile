@@ -73,6 +73,7 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
+  joinedProjects?: string[];
 }
 
 export interface UserCredentials extends User {

@@ -15,6 +15,7 @@ import IssueDetailDrawer from "./components/IssueDetailDrawer";
 import AuthView from "./components/AuthView";
 import ChatPanel from "./components/ChatPanel";
 import ProfileSettings from "./components/ProfileSettings";
+import ProjectSettingsModal from "./components/ProjectSettingsModal";
 
 export default function App() {
   // Global Workspace States
@@ -36,6 +37,15 @@ export default function App() {
   const [newProjName, setNewProjName] = useState("");
   const [newProjKey, setNewProjKey] = useState("");
   const [newProjDesc, setNewProjDesc] = useState("");
+
+  // Join Project Modal State
+  const [isJoinProjectOpen, setIsJoinProjectOpen] = useState(false);
+  const [joinInviteCode, setJoinInviteCode] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
+
+  // Project Settings Modal State
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
 
   // Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -235,37 +245,71 @@ export default function App() {
   };
 
   // Create new project handler
-  const handleCreateProjectSubmit = (e: React.FormEvent) => {
+  const handleCreateProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjName.trim() || !newProjKey.trim()) return;
 
-    const keyUpper = newProjKey.trim().toUpperCase();
-    const id = "proj-" + newProjName.trim().toLowerCase().replace(/\s+/g, "-");
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          name: newProjName.trim(), 
+          key: newProjKey.trim().toUpperCase(),
+          description: newProjDesc.trim() 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-    const newProject: Project = {
-      id,
-      name: newProjName.trim(),
-      key: keyUpper,
-      description: newProjDesc.trim(),
-    };
+      setProjects((prev) => [...prev, data]);
+      setActiveProjectId(data.id);
+      
+      // Create an initial backlog sprint for this new project locally
+      const defaultSprint: Sprint = {
+        id: "sprint-auto-" + Date.now(),
+        projectId: data.id,
+        name: `${data.key} Sprint 1`,
+        goal: "Bootstrapping initial iteration scope",
+        status: "future"
+      };
+      setSprints((prev) => [...prev, defaultSprint]);
 
-    setProjects((prev) => [...prev, newProject]);
-    setActiveProjectId(id);
-    
-    // Create an initial backlog sprint for this new project
-    const defaultSprint: Sprint = {
-      id: "sprint-auto-" + Date.now(),
-      projectId: id,
-      name: `${keyUpper} Sprint 1`,
-      goal: "Bootstrapping initial iteration scope",
-      status: "future"
-    };
-    setSprints((prev) => [...prev, defaultSprint]);
+      setNewProjName("");
+      setNewProjKey("");
+      setNewProjDesc("");
+      setIsNewProjectOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    setNewProjName("");
-    setNewProjKey("");
-    setNewProjDesc("");
-    setIsNewProjectOpen(false);
+  const handleJoinProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setJoinError("");
+    setIsJoining(true);
+    try {
+      const res = await fetch("/api/projects/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteCode: joinInviteCode.trim().toUpperCase() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to join project");
+
+      setProjects((prev) => {
+        if (!prev.find(p => p.id === data.id)) return [...prev, data];
+        return prev;
+      });
+      
+      setActiveProjectId(data.id);
+      setIsJoinProjectOpen(false);
+      setJoinInviteCode("");
+    } catch (err: any) {
+      setJoinError(err.message);
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   if (isAuthLoading) {
@@ -286,6 +330,78 @@ export default function App() {
   const handleProfileUpdated = (updatedUser: User) => {
     setCurrentUser(updatedUser);
   };
+
+  if (projects.length === 0) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 relative z-10 text-slate-800 font-sans" id="empty-app">
+        <div className="max-w-md w-full text-center space-y-8 p-8 glass-panel rounded-3xl animate-in fade-in zoom-in-95 duration-500 shadow-xl border border-slate-200">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner text-blue-600 font-bold text-3xl">
+            <Layout className="w-10 h-10" />
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight">You have no projects yet</h1>
+          <p className="text-slate-500 text-sm">Create a new workspace or join an existing one to start collaborating with your team.</p>
+          
+          <div className="flex flex-col gap-4 mt-8">
+            <button onClick={() => setIsNewProjectOpen(true)} className="glass-button-primary rounded-full py-3.5 text-sm font-bold shadow-xl shadow-blue-500/20">
+              Create your first project
+            </button>
+            <button onClick={() => setIsJoinProjectOpen(true)} className="px-6 py-3.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-all">
+              Join via Invite Code
+            </button>
+          </div>
+        </div>
+
+        {/* Global Profile Settings */}
+        <ProfileSettings
+          user={currentUser}
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          onProfileUpdated={handleProfileUpdated}
+        />
+
+        {/* New Project Modal Container inside Empty State */}
+        {isNewProjectOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
+                <h3 className="font-bold text-slate-800">Create New Project</h3>
+                <button onClick={() => setIsNewProjectOpen(false)} className="p-1 hover:bg-slate-900/5 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
+              </div>
+              <form onSubmit={handleCreateProjectSubmit} className="p-6 space-y-5">
+                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Project Name *</label><input required type="text" value={newProjName} onChange={(e) => setNewProjName(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl" placeholder="e.g. Website Redesign" /></div>
+                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Project Key *</label><input required type="text" value={newProjKey} onChange={(e) => setNewProjKey(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl" placeholder="e.g. WEB" maxLength={10} /></div>
+                <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label><textarea value={newProjDesc} onChange={(e) => setNewProjDesc(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl h-24 resize-none" placeholder="Optional brief description..." /></div>
+                <div className="pt-2 flex justify-end gap-3"><button type="button" onClick={() => setIsNewProjectOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-500">Cancel</button><button type="submit" className="px-5 py-2 text-sm font-semibold glass-button-primary rounded-full">Create Project</button></div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Join Project Modal */}
+        {isJoinProjectOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
+                <h3 className="font-bold text-slate-800">Join Project</h3>
+                <button onClick={() => setIsJoinProjectOpen(false)} className="p-1 hover:bg-slate-900/5 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
+              </div>
+              <form onSubmit={handleJoinProjectSubmit} className="p-6 space-y-5">
+                {joinError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl">{joinError}</div>}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Invite Code</label>
+                  <input required type="text" value={joinInviteCode} onChange={(e) => setJoinInviteCode(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl uppercase" placeholder="WRK-ABCD" />
+                </div>
+                <div className="pt-2 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsJoinProjectOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-500">Cancel</button>
+                  <button type="submit" disabled={isJoining} className="px-5 py-2 text-sm font-semibold glass-button-primary rounded-full disabled:opacity-50">{isJoining ? 'Joining...' : 'Join'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -313,14 +429,24 @@ export default function App() {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase px-2 tracking-wider">
                 <span>Workspace</span>
-                <button
-                  onClick={() => setIsNewProjectOpen(true)}
-                  className="hover:text-blue-600 transition-colors flex items-center gap-0.5 text-xs font-bold text-blue-500 cursor-pointer"
-                  title="Create New Project"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Project
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsJoinProjectOpen(true)}
+                    className="hover:text-blue-600 transition-colors flex items-center gap-0.5 text-xs font-bold text-slate-400 cursor-pointer"
+                    title="Join Project"
+                  >
+                    Join
+                  </button>
+                  <button
+                    onClick={() => setIsNewProjectOpen(true)}
+                    className="hover:text-blue-600 transition-colors flex items-center gap-0.5 text-xs font-bold text-blue-500 cursor-pointer"
+                    title="Create New Project"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> New
+                  </button>
+                </div>
               </div>
+
 
               {currentProject ? (
                 <div className="relative group px-3 py-2.5 bg-slate-900/5 hover:bg-white/15 rounded-xl shadow-xs border border-slate-900/10 flex items-center justify-between transition-all backdrop-blur-md">
@@ -335,19 +461,33 @@ export default function App() {
                   </div>
 
                   {/* Switcher selector */}
-                  <select
-                    value={activeProjectId}
-                    onChange={(e) => setActiveProjectId(e.target.value)}
-                    className="absolute inset-0 opacity-0 w-full cursor-pointer h-full"
-                    title="Switch Project Workspace"
-                  >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.key})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center">
+                    <div className="relative">
+                      <select
+                        value={activeProjectId}
+                        onChange={(e) => setActiveProjectId(e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full cursor-pointer h-full z-10"
+                        title="Switch Project Workspace"
+                      >
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.key})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-slate-500 mr-2" />
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsProjectSettingsOpen(true);
+                      }}
+                      className="p-1 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-900/10 transition-colors relative z-20"
+                      title="Project Settings"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-slate-500 px-2">No projects configured</p>
@@ -640,6 +780,35 @@ export default function App() {
           onProfileUpdated={handleProfileUpdated}
         />
 
+        {/* Project Settings Modal */}
+        <ProjectSettingsModal
+          project={currentProject || null}
+          isOpen={isProjectSettingsOpen}
+          onClose={() => setIsProjectSettingsOpen(false)}
+        />
+
+        {/* Join Project Modal (Global) */}
+        {isJoinProjectOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
+                <h3 className="font-bold text-slate-800">Join Project</h3>
+                <button onClick={() => setIsJoinProjectOpen(false)} className="p-1 hover:bg-slate-900/5 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
+              </div>
+              <form onSubmit={handleJoinProjectSubmit} className="p-6 space-y-5">
+                {joinError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl">{joinError}</div>}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Invite Code</label>
+                  <input required type="text" value={joinInviteCode} onChange={(e) => setJoinInviteCode(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl uppercase" placeholder="WRK-ABCD" />
+                </div>
+                <div className="pt-2 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsJoinProjectOpen(false)} className="px-4 py-2 text-sm font-semibold text-slate-500">Cancel</button>
+                  <button type="submit" disabled={isJoining} className="px-5 py-2 text-sm font-semibold glass-button-primary rounded-full disabled:opacity-50">{isJoining ? 'Joining...' : 'Join'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
