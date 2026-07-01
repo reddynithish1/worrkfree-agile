@@ -74,11 +74,16 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 app.post("/api/auth/signup", authLimiter, async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ error: "Missing required fields" });
-    const user = await createUser(email, password, name);
+    const { displayName, email, password } = req.body;
+    if (!displayName || !email || !password) return res.status(400).json({ error: "Missing required fields" });
+    const user = await createUser(email, password, displayName);
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict" });
+    res.cookie("token", token, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     res.json({ user });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -91,7 +96,12 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
     const user = await verifyUser(email, password);
     if (!user) return res.status(400).json({ error: "Invalid email or password" });
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict" });
+    res.cookie("token", token, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     res.json({ user });
   } catch (error: any) {
     res.status(500).json({ error: "Server error during login" });
@@ -107,7 +117,7 @@ app.get("/api/auth/me", authenticateToken, (req: any, res: any) => {
   const users = getUsers();
   const user = users.find((u: any) => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: "User not found" });
-  res.json({ user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar } });
+  res.json({ user });
 });
 
 // Initialize the Gemini AI Client on the server
@@ -177,44 +187,49 @@ Format the output strictly as clear, standard Markdown.`;
 // Update Profile
 app.patch("/api/user/profile", authenticateToken, async (req: any, res: any) => {
   try {
-    const userId = req.user.id; // from authenticateToken decoded JWT
-    const { name, avatarColor, currentPassword, newPassword } = req.body;
-
+    const { displayName, avatarColor, currentPassword, newPassword } = req.body;
+    
     let avatarUrl = undefined;
-    if (avatarColor && name) {
+    if (avatarColor && displayName) {
       // Remove '#' from color for ui-avatars
       const colorHex = avatarColor.replace('#', '');
-      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${colorHex}&color=fff&size=150`;
+      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=${colorHex}&color=fff&size=150`;
     }
 
-    const updates = {
-      name: name || undefined,
-      avatar: avatarUrl
-    };
+    // Create passwords object only if user wants to change password
+    let passwords = undefined;
+    if (currentPassword && newPassword) {
+      passwords = { current: currentPassword, new: newPassword };
+    }
 
-    const passwords = (currentPassword && newPassword) 
-      ? { current: currentPassword, new: newPassword } 
-      : undefined;
-
-    const updatedUser = await updateUser(userId, updates, passwords);
-
-    // Re-issue JWT with updated info
-    const token = jwt.sign(
-      { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name },
-      JWT_SECRET,
-      { expiresIn: "24h" }
-    );
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+    const updatedUser = await updateUser(req.user.id, { displayName, avatar: avatarUrl }, passwords);
+    
+    // Re-issue JWT token to keep it fresh
+    const token = jwt.sign({ id: updatedUser.id, email: updatedUser.email }, JWT_SECRET, { expiresIn: '7d' });
+    res.cookie("token", token, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production", 
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.json({ message: "Profile updated successfully", user: updatedUser });
+    res.json(updatedUser);
   } catch (error: any) {
     res.status(400).json({ error: error.message || "Failed to update profile" });
+  }
+});
+
+// ---------- PROJECTS ENDPOINTS ---------- //
+
+app.get("/api/projects", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const allProjects = getProjects();
+    // Only return projects where the user is a member
+    const userProjects = allProjects.filter(p => p.members.some(m => m.userId === userId));
+    res.json(userProjects);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -259,17 +274,17 @@ app.post("/api/projects/join", authenticateToken, async (req: any, res: any) => 
 app.get("/api/projects/:id/members", authenticateToken, async (req: any, res: any) => {
   try {
     const members = getProjectMembers(req.params.id);
-    // Enrich with user data (name, avatar)
-    const allUsers = getUsers();
-    const enrichedMembers = members.map(m => {
-      const u = allUsers.find(user => user.id === m.userId);
+    const users = getUsers();
+    const detailedMembers = members.map(m => {
+      const user = users.find(u => u.id === m.userId);
       return {
-        ...m,
-        name: u?.name || "Unknown User",
-        avatar: u?.avatar || ""
+        id: user?.id,
+        displayName: user?.displayName,
+        avatar: user?.avatar,
+        joinedAt: m.joinedAt
       };
     });
-    res.json(enrichedMembers);
+    res.json(detailedMembers);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

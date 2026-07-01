@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { X, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Save, CheckCircle2, AlertCircle, Settings } from 'lucide-react';
 
 interface ProfileSettingsProps {
   user: User;
@@ -19,7 +19,7 @@ const AVATAR_COLORS = [
 ];
 
 export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdated }: ProfileSettingsProps) {
-  const [name, setName] = useState(user.name);
+  const [displayName, setDisplayName] = useState(user.displayName);
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   
   const [currentPassword, setCurrentPassword] = useState('');
@@ -29,6 +29,25 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setDisplayName(user.displayName);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setError('');
+      setSuccess('');
+      
+      // If user has a ui-avatars URL, try to extract the background color
+      if (user.avatar && user.avatar.includes("ui-avatars.com")) {
+        const match = user.avatar.match(/background=([a-fA-F0-9]+)/);
+        if (match && match[1]) {
+          setAvatarColor(match[1]);
+        }
+      }
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -53,15 +72,16 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
     setIsLoading(true);
 
     try {
+      const payload: any = { displayName, avatarColor };
+      if (currentPassword && newPassword) {
+        payload.currentPassword = currentPassword;
+        payload.newPassword = newPassword;
+      }
+
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          avatarColor,
-          currentPassword,
-          newPassword
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -70,7 +90,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
       }
 
       setSuccess('Profile updated successfully!');
-      onProfileUpdated(data.user);
+      onProfileUpdated(data);
 
       // Clear password fields on success
       setCurrentPassword('');
@@ -85,21 +105,24 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50/40 backdrop-blur-sm">
-      <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
-          <h3 className="font-bold text-slate-800">Profile Settings</h3>
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-blue-500" />
+            Profile Settings
+          </h2>
           <button 
             onClick={onClose}
-            className="p-1 hover:bg-slate-900/5 rounded-full transition-colors"
+            className="p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-slate-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[80vh] space-y-6">
           
           {/* Status Messages */}
           {error && (
@@ -124,9 +147,9 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
               <input
                 type="text"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm glass-input rounded-xl"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-3.5 py-2 text-sm glass-input rounded-xl border border-slate-200"
               />
             </div>
 
@@ -160,7 +183,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm glass-input rounded-xl"
+                className="w-full px-3.5 py-2 text-sm glass-input rounded-xl border border-slate-200"
                 placeholder="Enter current password to authorize"
               />
             </div>
@@ -172,7 +195,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm glass-input rounded-xl"
+                  className="w-full px-3.5 py-2 text-sm glass-input rounded-xl border border-slate-200"
                   placeholder="Min 8 chars"
                 />
               </div>
@@ -182,7 +205,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm glass-input rounded-xl"
+                  className="w-full px-3.5 py-2 text-sm glass-input rounded-xl border border-slate-200"
                   placeholder="Match password"
                 />
               </div>
@@ -190,7 +213,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
           </div>
 
           {/* Actions */}
-          <div className="pt-4 flex justify-end gap-3 border-t border-slate-900/10">
+          <div className="pt-4 flex justify-end gap-3 border-t border-slate-900/10 mt-6">
             <button
               type="button"
               onClick={onClose}

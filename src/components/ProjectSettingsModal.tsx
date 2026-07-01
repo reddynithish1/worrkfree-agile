@@ -216,17 +216,17 @@ export default function ProjectSettingsModal({
                 <div className="text-sm text-slate-500 py-4 text-center">No members found.</div>
               ) : (
                 members.map((member, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100 shadow-sm">
+                  <div key={index} className="flex items-center gap-3">
                     <img 
                       src={member.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"} 
-                      alt={member.name}
-                      className="w-8 h-8 rounded-full border border-slate-200"
+                      alt={member.displayName || "Unknown User"} 
+                      className="w-10 h-10 rounded-full border border-slate-200"
                     />
                     <div>
-                      <div className="text-sm font-bold text-slate-800 leading-tight">
-                        {member.name}
+                      <div className="font-bold text-sm text-slate-800">
+                        {member.displayName || "Unknown User"}
                       </div>
-                      <div className="text-[10px] font-semibold text-slate-400">
+                      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         Joined {new Date(member.joinedAt).toLocaleDateString()}
                       </div>
                     </div>

@@ -26,21 +26,29 @@ export function saveUsers(users: UserCredentials[]) {
   }
 }
 
-export async function createUser(email: string, passwordPlain: string, name: string): Promise<User> {
+export async function createUser(emailRaw: string, passwordPlain: string, displayName: string): Promise<User> {
   const users = getUsers();
+  const email = emailRaw.trim().toLowerCase();
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new Error("Invalid email format");
+  }
+
   if (users.find(u => u.email === email)) {
-    throw new Error("User already exists");
+    throw new Error("An account with this email already exists");
   }
 
   const hashedPassword = await bcrypt.hash(passwordPlain, 10);
   
   const newUser: UserCredentials = {
     id: "user-" + Date.now(),
-    name,
+    displayName,
     email,
     passwordHash: hashedPassword,
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    joinedProjects: []
+    projects: [],
+    createdAt: new Date().toISOString()
   };
 
   users.push(newUser);
@@ -49,13 +57,16 @@ export async function createUser(email: string, passwordPlain: string, name: str
   // Return the safe user object (no password)
   return {
     id: newUser.id,
-    name: newUser.name,
+    displayName: newUser.displayName,
     email: newUser.email,
-    avatar: newUser.avatar
+    avatar: newUser.avatar,
+    projects: newUser.projects,
+    createdAt: newUser.createdAt
   };
 }
 
-export async function verifyUser(email: string, passwordPlain: string): Promise<User | null> {
+export async function verifyUser(emailRaw: string, passwordPlain: string): Promise<User | null> {
+  const email = emailRaw.trim().toLowerCase();
   const users = getUsers();
   const user = users.find(u => u.email === email);
   if (!user) return null;
@@ -65,15 +76,17 @@ export async function verifyUser(email: string, passwordPlain: string): Promise<
 
   return {
     id: user.id,
-    name: user.name,
+    displayName: user.displayName,
     email: user.email,
-    avatar: user.avatar
+    avatar: user.avatar,
+    projects: user.projects,
+    createdAt: user.createdAt
   };
 }
 
 export async function updateUser(
   id: string, 
-  updates: { name?: string; avatar?: string }, 
+  updates: { displayName?: string; avatar?: string }, 
   passwords?: { current: string; new: string }
 ): Promise<User> {
   const users = getUsers();
@@ -95,7 +108,7 @@ export async function updateUser(
   }
 
   // Update name and avatar if provided
-  if (updates.name) user.name = updates.name;
+  if (updates.displayName) user.displayName = updates.displayName;
   if (updates.avatar) user.avatar = updates.avatar;
 
   users[index] = user;
@@ -103,22 +116,22 @@ export async function updateUser(
 
   return {
     id: user.id,
-    name: user.name,
+    displayName: user.displayName,
     email: user.email,
     avatar: user.avatar,
-    joinedProjects: user.joinedProjects
+    projects: user.projects,
+    createdAt: user.createdAt
   };
 }
 
 export function joinUserToProject(userId: string, projectId: string) {
   const users = getUsers();
   const index = users.findIndex(u => u.id === userId);
-  
   if (index !== -1) {
     const user = users[index];
-    if (!user.joinedProjects) user.joinedProjects = [];
-    if (!user.joinedProjects.includes(projectId)) {
-      user.joinedProjects.push(projectId);
+    if (!user.projects) user.projects = [];
+    if (!user.projects.includes(projectId)) {
+      user.projects.push(projectId);
       users[index] = user;
       saveUsers(users);
     }
@@ -130,8 +143,8 @@ export function removeProjectFromAllUsers(projectId: string) {
   let modified = false;
 
   for (const user of users) {
-    if (user.joinedProjects && user.joinedProjects.includes(projectId)) {
-      user.joinedProjects = user.joinedProjects.filter(id => id !== projectId);
+    if (user.projects && user.projects.includes(projectId)) {
+      user.projects = user.projects.filter(id => id !== projectId);
       modified = true;
     }
   }

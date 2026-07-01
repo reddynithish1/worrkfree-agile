@@ -71,10 +71,11 @@ export type ActiveTab = "board" | "backlog" | "copilot" | "insights";
 
 export interface User {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
   avatar: string;
-  joinedProjects?: string[];
+  projects?: string[];
+  createdAt?: string;
 }
 
 export interface UserCredentials extends User {

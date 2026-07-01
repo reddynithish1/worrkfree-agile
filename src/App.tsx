@@ -66,54 +66,59 @@ export default function App() {
       })
       .catch(() => {
         setCurrentUser(null);
+        setIsInitialized(true); // if not logged in, just end init
       })
       .finally(() => {
         setIsAuthLoading(false);
       });
   }, []);
 
-  // 1. LIFECYCLE: Sync & Load LocalStorage Workspace
+  // LIFECYCLE: Load Data when User Logs In
   useEffect(() => {
-    try {
-      const cachedProjects = localStorage.getItem("jira_projects");
-      const cachedSprints = localStorage.getItem("jira_sprints");
-      const cachedIssues = localStorage.getItem("jira_issues");
-
-      if (cachedProjects && cachedSprints && cachedIssues) {
-        setProjects(JSON.parse(cachedProjects));
-        setSprints(JSON.parse(cachedSprints));
-        setIssues(JSON.parse(cachedIssues));
-        
-        const decodedProjects = JSON.parse(cachedProjects);
-        if (decodedProjects.length > 0) {
-          setActiveProjectId(decodedProjects[0].id);
+    if (!currentUser) return;
+    
+    // Fetch projects from backend
+    fetch("/api/projects")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch projects");
+        return res.json();
+      })
+      .then(fetchedProjects => {
+        setProjects(fetchedProjects);
+        if (fetchedProjects.length > 0) {
+          setActiveProjectId(fetchedProjects[0].id);
         }
-      } else {
-        // First run: Seed data
-        setProjects(INITIAL_PROJECTS);
-        setSprints(INITIAL_SPRINTS);
-        setIssues(INITIAL_ISSUES);
-        setActiveProjectId(INITIAL_PROJECTS[0].id);
 
-        localStorage.setItem("jira_projects", JSON.stringify(INITIAL_PROJECTS));
-        localStorage.setItem("jira_sprints", JSON.stringify(INITIAL_SPRINTS));
-        localStorage.setItem("jira_issues", JSON.stringify(INITIAL_ISSUES));
-      }
-    } catch (e) {
-      console.error("Failed loading cached state", e);
-    } finally {
-      setIsInitialized(true);
-    }
-  }, []);
+        // Load Sprints and Issues from strictly scoped local storage
+        const sprintsKey = `jira_sprints_${currentUser.id}`;
+        const issuesKey = `jira_issues_${currentUser.id}`;
+        
+        const cachedSprints = localStorage.getItem(sprintsKey);
+        const cachedIssues = localStorage.getItem(issuesKey);
 
-  // Save changes to localStorage
+        if (cachedSprints && cachedIssues) {
+          setSprints(JSON.parse(cachedSprints));
+          setIssues(JSON.parse(cachedIssues));
+        } else {
+          setSprints([]);
+          setIssues([]);
+        }
+      })
+      .catch(e => console.error("Error loading user data", e))
+      .finally(() => {
+        setIsInitialized(true);
+      });
+  }, [currentUser]);
+
+  // Save changes to scoped localStorage
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("jira_projects", JSON.stringify(projects));
-      localStorage.setItem("jira_sprints", JSON.stringify(sprints));
-      localStorage.setItem("jira_issues", JSON.stringify(issues));
+    if (isInitialized && currentUser) {
+      const sprintsKey = `jira_sprints_${currentUser.id}`;
+      const issuesKey = `jira_issues_${currentUser.id}`;
+      localStorage.setItem(sprintsKey, JSON.stringify(sprints));
+      localStorage.setItem(issuesKey, JSON.stringify(issues));
     }
-  }, [projects, sprints, issues, isInitialized]);
+  }, [sprints, issues, isInitialized, currentUser]);
 
   // Current selected project details
   const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || null;
@@ -323,15 +328,9 @@ export default function App() {
     }
   };
 
-  if (isAuthLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 text-slate-900">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-blue-600/90 rounded-xl mb-4 flex items-center justify-center font-bold text-xl">W</div>
-          <div className="text-xl font-bold">Loading WorrkFree...</div>
-        </div>
-      </div>
-    );
+  if (isAuthLoading || (currentUser && !isInitialized)) {
+    // Return completely blank for silent session restore
+    return <div className="h-screen w-screen bg-slate-50"></div>;
   }
 
   if (!currentUser) {
@@ -572,17 +571,17 @@ export default function App() {
 
           {/* Footer info segment */}
           <div 
-            className="flex items-center space-x-3 p-3 bg-slate-900/5 rounded-2xl border border-slate-900/10 backdrop-blur-md shadow-xs cursor-pointer hover:bg-white/10 transition-colors"
-            onClick={() => setIsProfileOpen(true)}
+            className="flex items-center space-x-3 p-3 bg-slate-900/5 rounded-2xl border border-slate-900/10 backdrop-blur-md shadow-xs hover:bg-white/10 transition-colors"
           >
             <img
               src={currentUser.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
-              alt={`${currentUser.name} profile`}
-              className="w-8 h-8 rounded-full border-2 border-white object-cover"
+              alt={`${currentUser.displayName} profile`}
+              className="w-8 h-8 rounded-full border-2 border-white object-cover cursor-pointer"
               referrerPolicy="no-referrer"
+              onClick={() => setIsProfileOpen(true)}
             />
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-slate-800 truncate">{currentUser.name}</div>
+            <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setIsProfileOpen(true)}>
+              <div className="text-xs font-bold text-slate-800 truncate">{currentUser.displayName}</div>
               <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{currentUser.email}</div>
             </div>
             <button
@@ -590,9 +589,13 @@ export default function App() {
                 e.stopPropagation();
                 await fetch("/api/auth/logout", { method: "POST" });
                 setCurrentUser(null);
+                setProjects([]);
+                setSprints([]);
+                setIssues([]);
+                setActiveProjectId("");
               }}
               title="Logout"
-              className="p-1.5 hover:bg-slate-900/5 rounded-lg text-slate-500 hover:text-rose-500 transition-colors"
+              className="p-1.5 hover:bg-slate-900/10 rounded-lg text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>

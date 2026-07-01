@@ -7,7 +7,7 @@ interface AuthViewProps {
 
 export default function AuthView({ onLogin }: AuthViewProps) {
   const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,12 +20,17 @@ export default function AuthView({ onLogin }: AuthViewProps) {
 
     try {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
-      const payload = isLogin ? { email, password } : { name, email, password };
+      const payload = isLogin ? { email } : { displayName, email };
       
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("Invalid email format");
+      }
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(isLogin ? { email, password } : { displayName, email, password })
       });
       
       const data = await res.json();
@@ -70,11 +75,11 @@ export default function AuthView({ onLogin }: AuthViewProps) {
 
           {!isLogin && (
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5 uppercase tracking-wider">Name</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1.5 uppercase tracking-wider">Display Name</label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full bg-white/50 border border-slate-900/10 rounded-lg px-4 py-2.5 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                 placeholder="John Doe"
                 required
@@ -86,6 +91,8 @@ export default function AuthView({ onLogin }: AuthViewProps) {
             <label className="block text-xs font-medium text-slate-700 mb-1.5 uppercase tracking-wider">Email</label>
             <input
               type="email"
+              pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+              title="Please enter a valid email address (e.g., user@example.com)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-white/50 border border-slate-900/10 rounded-lg px-4 py-2.5 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
