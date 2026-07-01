@@ -14,6 +14,7 @@ import InsightsView from "./components/InsightsView";
 import IssueDetailDrawer from "./components/IssueDetailDrawer";
 import AuthView from "./components/AuthView";
 import ChatPanel from "./components/ChatPanel";
+import ProfileSettings from "./components/ProfileSettings";
 
 export default function App() {
   // Global Workspace States
@@ -26,6 +27,9 @@ export default function App() {
   
   // Chat Panel State
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Profile Settings State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // New Project Modal State
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
@@ -279,6 +283,10 @@ export default function App() {
     return <AuthView onLogin={(user) => setCurrentUser(user)} />;
   }
 
+  const handleProfileUpdated = (updatedUser: User) => {
+    setCurrentUser(updatedUser);
+  };
+
   return (
     <>
       {/* Dynamic Animated Glass Backdrop blobs */}
@@ -412,7 +420,10 @@ export default function App() {
           </div>
 
           {/* Footer info segment */}
-          <div className="flex items-center space-x-3 p-3 bg-slate-900/5 rounded-2xl border border-slate-900/10 backdrop-blur-md shadow-xs">
+          <div 
+            className="flex items-center space-x-3 p-3 bg-slate-900/5 rounded-2xl border border-slate-900/10 backdrop-blur-md shadow-xs cursor-pointer hover:bg-white/10 transition-colors"
+            onClick={() => setIsProfileOpen(true)}
+          >
             <img
               src={currentUser.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
               alt={`${currentUser.name} profile`}
@@ -424,7 +435,8 @@ export default function App() {
               <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{currentUser.email}</div>
             </div>
             <button
-              onClick={async () => {
+              onClick={async (e) => {
+                e.stopPropagation();
                 await fetch("/api/auth/logout", { method: "POST" });
                 setCurrentUser(null);
               }}
@@ -618,6 +630,14 @@ export default function App() {
           user={currentUser} 
           isOpen={isChatOpen} 
           onClose={() => setIsChatOpen(false)} 
+        />
+
+        {/* Global Profile Settings */}
+        <ProfileSettings
+          user={currentUser}
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          onProfileUpdated={handleProfileUpdated}
         />
 
       </div>

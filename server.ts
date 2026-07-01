@@ -3,7 +3,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
-import { createUser, verifyUser, getUsers } from "./src/db/authDb";
+import { createUser, verifyUser, getUsers, updateUser } from "./src/db/authDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
@@ -170,6 +170,50 @@ Format the output strictly as clear, standard Markdown.`;
     console.error("AI Description Error:", error.message);
     const status = error.status || 500;
     res.status(status).json({ error: error.message || "Failed to generate issue description" });
+  }
+});
+
+// Update Profile
+app.patch("/api/user/profile", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id; // from authenticateToken decoded JWT
+    const { name, avatarColor, currentPassword, newPassword } = req.body;
+
+    let avatarUrl = undefined;
+    if (avatarColor && name) {
+      // Remove '#' from color for ui-avatars
+      const colorHex = avatarColor.replace('#', '');
+      avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${colorHex}&color=fff&size=150`;
+    }
+
+    const updates = {
+      name: name || undefined,
+      avatar: avatarUrl
+    };
+
+    const passwords = (currentPassword && newPassword) 
+      ? { current: currentPassword, new: newPassword } 
+      : undefined;
+
+    const updatedUser = await updateUser(userId, updates, passwords);
+
+    // Re-issue JWT with updated info
+    const token = jwt.sign(
+      { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    res.json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || "Failed to update profile" });
   }
 });
 

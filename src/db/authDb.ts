@@ -69,3 +69,41 @@ export async function verifyUser(email: string, passwordPlain: string): Promise<
     avatar: user.avatar
   };
 }
+
+export async function updateUser(
+  id: string, 
+  updates: { name?: string; avatar?: string }, 
+  passwords?: { current: string; new: string }
+): Promise<User> {
+  const users = getUsers();
+  const index = users.findIndex(u => u.id === id);
+  
+  if (index === -1) {
+    throw new Error("User not found");
+  }
+
+  const user = users[index];
+
+  // Handle password update if provided
+  if (passwords && passwords.current && passwords.new) {
+    const isValid = await bcrypt.compare(passwords.current, user.passwordHash);
+    if (!isValid) {
+      throw new Error("Incorrect current password");
+    }
+    user.passwordHash = await bcrypt.hash(passwords.new, 10);
+  }
+
+  // Update name and avatar if provided
+  if (updates.name) user.name = updates.name;
+  if (updates.avatar) user.avatar = updates.avatar;
+
+  users[index] = user;
+  saveUsers(users);
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar
+  };
+}
