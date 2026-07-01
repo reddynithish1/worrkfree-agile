@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Folder, Calendar, Sparkles, BarChart2, CheckSquare, Plus, ChevronDown, 
-  Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X, MessageSquare 
+  Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X, MessageSquare, Layout
 } from "lucide-react";
 
 // Modular imports

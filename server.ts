@@ -4,7 +4,15 @@ import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import { createUser, verifyUser, getUsers, updateUser, joinUserToProject, removeProjectFromAllUsers } from "./src/db/authDb";
-import { createProject, joinProject, getProjectMembers, getInviteCode, updateProject, deleteProject } from "./src/db/projectDb";
+import {
+  createProject,
+  joinProject,
+  updateProject,
+  deleteProject,
+  getProjectMembers,
+  getProjects,
+  getInviteCode
+} from "./src/db/projectDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
