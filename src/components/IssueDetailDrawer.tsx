@@ -219,13 +219,13 @@ export default function IssueDetailDrawer({
   const totalHoursSpent = issue.workLogs.reduce((sum, w) => sum + w.hoursLogged, 0);
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-4xl bg-white/10 backdrop-blur-2xl shadow-2xl border-l border-white/10 flex flex-col animate-in slide-in-from-right duration-250">
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-4xl bg-slate-900/5 backdrop-blur-2xl shadow-2xl border-l border-slate-900/10 flex flex-col animate-in slide-in-from-right duration-250">
       
       {/* Drawer Title & Actions Bar */}
-      <div className="px-6 py-4.5 border-b border-white/10 bg-white/10 text-slate-200 flex items-center justify-between">
+      <div className="px-6 py-4.5 border-b border-slate-900/10 bg-slate-900/5 text-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-500">
           <span>{issue.projectId === "proj-quantum" ? "QUANTUM ENGINE" : "APOLLO FRONTEND"}</span>
-          <span className="text-white/20 font-normal">/</span>
+          <span className="text-slate-900/20 font-normal">/</span>
           <span className="text-blue-600 font-black select-all">{issue.key}</span>
         </div>
 
@@ -237,14 +237,14 @@ export default function IssueDetailDrawer({
                 onClose();
               }
             }}
-            className="p-2 hover:bg-white/10 text-rose-600 hover:text-rose-700 rounded-full transition-colors cursor-pointer"
+            className="p-2 hover:bg-slate-900/5 text-rose-600 hover:text-rose-700 rounded-full transition-colors cursor-pointer"
             title="Delete Issue"
           >
             <Trash className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-white/10 text-slate-500 hover:text-slate-200 rounded-full transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-slate-900/5 text-slate-500 hover:text-slate-800 rounded-full transition-colors cursor-pointer"
           >
             <X className="w-5.5 h-5.5" />
           </button>
@@ -264,7 +264,7 @@ export default function IssueDetailDrawer({
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               onBlur={handleSummaryBlur}
-              className="w-full text-xl font-bold text-slate-200 border-0 border-b border-transparent hover:border-white/10 focus:border-blue-500 focus:ring-0 px-2 py-1.5 transition-all bg-transparent rounded-xl focus:bg-white/10"
+              className="w-full text-xl font-bold text-slate-800 border-0 border-b border-transparent hover:border-slate-900/10 focus:border-blue-500 focus:ring-0 px-2 py-1.5 transition-all bg-transparent rounded-xl focus:bg-slate-900/5"
             />
           </div>
 
@@ -278,7 +278,7 @@ export default function IssueDetailDrawer({
               <button
                 disabled={aiLoading.desc}
                 onClick={triggerAIDescription}
-                className="flex items-center gap-1.5 px-4 py-2 glass-button-primary disabled:bg-white/10 disabled:text-slate-400 disabled:border-white/10 font-bold text-xs rounded-full transition-all shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2 glass-button-primary disabled:bg-slate-900/5 disabled:text-slate-500 disabled:border-slate-900/10 font-bold text-xs rounded-full transition-all shadow-xs"
               >
                 {aiLoading.desc ? "Drafting Description..." : "AI Optimize Description"}
               </button>
@@ -286,7 +286,7 @@ export default function IssueDetailDrawer({
               <button
                 disabled={aiLoading.breakdown}
                 onClick={triggerAIBreakdown}
-                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-white/10 disabled:text-slate-400 text-white font-bold text-xs rounded-full transition-all shadow-xs cursor-pointer border border-white/10"
+                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-900/5 disabled:text-slate-500 text-slate-900 font-bold text-xs rounded-full transition-all shadow-xs cursor-pointer border border-slate-900/10"
               >
                 {aiLoading.breakdown ? "Analyzing..." : "AI Subtask Breakdown"}
               </button>
@@ -302,19 +302,19 @@ export default function IssueDetailDrawer({
 
             {/* AI Estimation Result Panel */}
             {aiEstimationResult && (
-              <div className="bg-white/10 border border-white/10 backdrop-blur-md rounded-xl p-4.5 text-xs shadow-2xs animate-in slide-in-from-top-1">
+              <div className="bg-slate-900/5 border border-slate-900/10 backdrop-blur-md rounded-xl p-4.5 text-xs shadow-2xs animate-in slide-in-from-top-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-slate-200">
+                  <span className="font-bold text-slate-800">
                     AI Estimated Value: <strong className="text-sm text-blue-600">{aiEstimationResult.points} SP</strong>
                   </span>
                   <button
                     onClick={applyAIEstimation}
-                    className="px-3.5 py-1.5 glass-button-primary text-white font-bold rounded-full text-xs shadow-xs"
+                    className="px-3.5 py-1.5 glass-button-primary text-slate-900 font-bold rounded-full text-xs shadow-xs"
                   >
                     Apply Estimate
                   </button>
                 </div>
-                <p className="text-slate-400 leading-relaxed italic font-semibold">
+                <p className="text-slate-500 leading-relaxed italic font-semibold">
                   Rationale: "{aiEstimationResult.rationale}"
                 </p>
               </div>
@@ -347,7 +347,7 @@ export default function IssueDetailDrawer({
                       setDescription(issue.description);
                       setIsEditingDesc(false);
                     }}
-                    className="text-xs text-slate-500 hover:text-slate-200 font-semibold transition-colors cursor-pointer"
+                    className="text-xs text-slate-500 hover:text-slate-800 font-semibold transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -359,11 +359,11 @@ export default function IssueDetailDrawer({
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-48 px-4 py-3 text-xs glass-input rounded-2xl font-mono focus:bg-white/10 text-slate-200"
+                className="w-full h-48 px-4 py-3 text-xs glass-input rounded-2xl font-mono focus:bg-slate-900/5 text-slate-800"
                 placeholder="Use Markdown formats: # Header, **bold**, - list..."
               />
             ) : (
-              <div className="prose prose-sm prose-slate max-w-none bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 min-h-[120px] text-slate-200 text-xs leading-relaxed space-y-2 whitespace-pre-wrap font-sans shadow-2xs font-medium">
+              <div className="prose prose-sm prose-slate max-w-none bg-slate-900/5 backdrop-blur-md rounded-2xl p-5 border border-slate-900/10 min-h-[120px] text-slate-800 text-xs leading-relaxed space-y-2 whitespace-pre-wrap font-sans shadow-2xs font-medium">
                 {description || (
                   <span className="text-slate-500 italic">No description provided. Click AI Optimize or Edit to begin writing.</span>
                 )}
@@ -378,7 +378,7 @@ export default function IssueDetailDrawer({
                 Sub-tasks Checklist
               </label>
               {issue.subtasks.length > 0 && (
-                <span className="text-xs font-bold text-slate-300 bg-white/10 border border-white/10 px-2 py-0.5 rounded-full text-[11px] shadow-2xs">
+                <span className="text-xs font-bold text-slate-700 bg-slate-900/5 border border-slate-900/10 px-2 py-0.5 rounded-full text-[11px] shadow-2xs">
                   {Math.round((issue.subtasks.filter(s => s.completed).length / issue.subtasks.length) * 100)}% Complete
                 </span>
               )}
@@ -387,15 +387,15 @@ export default function IssueDetailDrawer({
             {/* Subtask items checklist */}
             <div className="space-y-1.5 mb-3">
               {issue.subtasks.map((st) => (
-                <div key={st.id} className="flex items-center justify-between p-2.5 bg-white/10 hover:bg-white/10 border border-white/10 rounded-xl group text-xs transition-colors">
+                <div key={st.id} className="flex items-center justify-between p-2.5 bg-slate-900/5 hover:bg-slate-900/5 border border-slate-900/10 rounded-xl group text-xs transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <input
                       type="checkbox"
                       checked={st.completed}
                       onChange={(e) => handleToggleSubtask(st.id, e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded border-white/10 focus:ring-blue-500/20 focus:ring-2 cursor-pointer"
+                      className="w-4 h-4 text-blue-600 rounded border-slate-900/10 focus:ring-blue-500/20 focus:ring-2 cursor-pointer"
                     />
-                    <span className={`text-slate-200 font-semibold truncate ${st.completed ? "line-through text-slate-400" : ""}`}>
+                    <span className={`text-slate-800 font-semibold truncate ${st.completed ? "line-through text-slate-500" : ""}`}>
                       {st.title}
                     </span>
                   </div>
@@ -424,7 +424,7 @@ export default function IssueDetailDrawer({
               />
               <button
                 onClick={handleAddSubtask}
-                className="px-4 py-2 glass-button-primary text-white font-bold rounded-full text-xs shadow-2xs"
+                className="px-4 py-2 glass-button-primary text-slate-900 font-bold rounded-full text-xs shadow-2xs"
               >
                 Add
               </button>
@@ -432,7 +432,7 @@ export default function IssueDetailDrawer({
           </div>
 
           {/* Comments Thread Section */}
-          <div className="border-t border-white/10 pt-6">
+          <div className="border-t border-slate-900/10 pt-6">
             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
               Activity & Comments ({issue.comments.length})
             </h4>
@@ -451,7 +451,7 @@ export default function IssueDetailDrawer({
                   placeholder="Ask a question or provide design logs..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs glass-input rounded-xl placeholder:text-slate-400 shadow-2xs text-slate-200"
+                  className="w-full px-3.5 py-2.5 text-xs glass-input rounded-xl placeholder:text-slate-500 shadow-2xs text-slate-800"
                 />
                 <button
                   type="submit"
@@ -465,7 +465,7 @@ export default function IssueDetailDrawer({
             {/* List of comments */}
             <div className="space-y-4">
               {issue.comments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-3 text-xs p-4 bg-white/10 rounded-xl border border-white/10 hover:border-blue-600/30 transition-all group">
+                <div key={comment.id} className="flex items-start gap-3 text-xs p-4 bg-slate-900/5 rounded-xl border border-slate-900/10 hover:border-blue-600/30 transition-all group">
                   <img
                     src={comment.avatar}
                     alt={comment.author}
@@ -475,7 +475,7 @@ export default function IssueDetailDrawer({
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="space-x-2">
-                        <strong className="font-bold text-slate-200">{comment.author}</strong>
+                        <strong className="font-bold text-slate-800">{comment.author}</strong>
                         <span className="text-[10px] text-slate-500 font-semibold">
                           {new Date(comment.createdAt).toLocaleString()}
                         </span>
@@ -487,7 +487,7 @@ export default function IssueDetailDrawer({
                         Delete
                       </button>
                     </div>
-                    <p className="text-slate-400 font-semibold leading-relaxed font-sans">{comment.text}</p>
+                    <p className="text-slate-500 font-semibold leading-relaxed font-sans">{comment.text}</p>
                   </div>
                 </div>
               ))}
@@ -497,7 +497,7 @@ export default function IssueDetailDrawer({
         </div>
 
         {/* RIGHT PANEL - Attributes sidebar (4 columns) */}
-        <div className="lg:col-span-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 space-y-5 h-fit">
+        <div className="lg:col-span-4 bg-slate-900/5 backdrop-blur-md border border-slate-900/10 rounded-2xl p-5 space-y-5 h-fit">
           
           {/* Status dropdown */}
           <div>
@@ -507,7 +507,7 @@ export default function IssueDetailDrawer({
             <select
               value={issue.status}
               onChange={(e) => updateAttribute("status", e.target.value as IssueStatus)}
-              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-200 cursor-pointer shadow-2xs"
+              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="Backlog">Backlog</option>
               <option value="To Do">To Do</option>
@@ -525,7 +525,7 @@ export default function IssueDetailDrawer({
             <select
               value={issue.type}
               onChange={(e) => updateAttribute("type", e.target.value as IssueType)}
-              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-200 cursor-pointer shadow-2xs"
+              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="Epic">Epic</option>
               <option value="Story">Story</option>
@@ -545,7 +545,7 @@ export default function IssueDetailDrawer({
                 const user = SEED_USERS.find(u => u.name === e.target.value);
                 if (user) updateAttribute("assignee", user);
               }}
-              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-200 cursor-pointer shadow-2xs"
+              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
               {SEED_USERS.map((user) => (
                 <option key={user.email} value={user.name}>
@@ -563,7 +563,7 @@ export default function IssueDetailDrawer({
             <select
               value={issue.priority}
               onChange={(e) => updateAttribute("priority", e.target.value as IssuePriority)}
-              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-200 cursor-pointer shadow-2xs"
+              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="Highest">Highest</option>
               <option value="High">High</option>
@@ -580,7 +580,7 @@ export default function IssueDetailDrawer({
             <select
               value={issue.storyPoints || 0}
               onChange={(e) => updateAttribute("storyPoints", Number(e.target.value))}
-              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-200 cursor-pointer shadow-2xs"
+              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="0">0 SP</option>
               <option value="1">1 SP</option>
@@ -603,7 +603,7 @@ export default function IssueDetailDrawer({
                 const val = e.target.value === "backlog" ? null : e.target.value;
                 updateAttribute("sprintId", val);
               }}
-              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-200 cursor-pointer shadow-2xs"
+              className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="backlog">Product Backlog</option>
               {sprints
@@ -617,7 +617,7 @@ export default function IssueDetailDrawer({
           </div>
 
           {/* Work Log & Progress */}
-          <div className="border-t border-white/10 pt-4">
+          <div className="border-t border-slate-900/10 pt-4">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Logged Work Time
@@ -634,7 +634,7 @@ export default function IssueDetailDrawer({
                 <Clock className="w-3.5 h-3.5" /> Log hours...
               </button>
             ) : (
-              <form onSubmit={handleLogWorkSubmit} className="space-y-2.5 p-3.5 bg-white/10 border border-white/10 rounded-2xl shadow-2xs">
+              <form onSubmit={handleLogWorkSubmit} className="space-y-2.5 p-3.5 bg-slate-900/5 border border-slate-900/10 rounded-2xl shadow-2xs">
                 <div>
                   <input
                     type="number"
@@ -644,7 +644,7 @@ export default function IssueDetailDrawer({
                     placeholder="Log hours (e.g., 2.5)"
                     value={logHours}
                     onChange={(e) => setLogHours(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs glass-input rounded-xl text-slate-200"
+                    className="w-full px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800"
                   />
                 </div>
                 <div>
@@ -653,20 +653,20 @@ export default function IssueDetailDrawer({
                     placeholder="Brief description..."
                     value={logDesc}
                     onChange={(e) => setLogDesc(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs glass-input rounded-xl text-slate-200"
+                    className="w-full px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800"
                   />
                 </div>
                 <div className="flex gap-2 justify-end items-center">
                   <button
                     type="button"
                     onClick={() => setIsLoggingWork(false)}
-                    className="text-[10px] font-bold text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-3.5 py-1.5 glass-button-primary text-white font-bold text-[10px] rounded-full shadow-xs"
+                    className="px-3.5 py-1.5 glass-button-primary text-slate-900 font-bold text-[10px] rounded-full shadow-xs"
                   >
                     Log Work
                   </button>
@@ -680,10 +680,10 @@ export default function IssueDetailDrawer({
                 {issue.workLogs.map((wl) => (
                   <div key={wl.id} className="text-[10px] text-slate-500 pt-2.5 first:pt-0">
                     <div className="flex items-center justify-between font-semibold mb-1">
-                      <span className="text-slate-200 font-bold">{wl.author}</span>
+                      <span className="text-slate-800 font-bold">{wl.author}</span>
                       <span className="text-blue-600 bg-blue-600/10 border border-blue-600/20 px-2 py-0.5 rounded-full font-bold">{wl.hoursLogged}h</span>
                     </div>
-                    <p className="italic text-slate-400 font-semibold truncate mt-0.5">"{wl.description}"</p>
+                    <p className="italic text-slate-500 font-semibold truncate mt-0.5">"{wl.description}"</p>
                   </div>
                 ))}
               </div>
@@ -691,7 +691,7 @@ export default function IssueDetailDrawer({
           </div>
 
           {/* Time Dates stamp */}
-          <div className="border-t border-white/10 pt-4 text-[9px] text-slate-500 font-bold space-y-1">
+          <div className="border-t border-slate-900/10 pt-4 text-[9px] text-slate-500 font-bold space-y-1">
             <div>Created: {new Date(issue.createdAt).toLocaleString()}</div>
             <div>Updated: {new Date(issue.updatedAt).toLocaleString()}</div>
           </div>

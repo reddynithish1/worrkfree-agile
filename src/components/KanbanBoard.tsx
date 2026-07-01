@@ -151,16 +151,16 @@ export default function KanbanBoard({
   return (
     <div className="flex flex-col h-full bg-transparent" id="kanban-workspace">
       {/* Board Header Section */}
-      <div className="px-6 py-5 bg-white/25 backdrop-blur-md border-b border-white/10 shadow-xs">
+      <div className="px-6 py-5 bg-white/25 backdrop-blur-md border-b border-slate-900/10 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               Active Sprint Board
             </div>
-            <h1 className="text-xl font-bold text-slate-200 tracking-tight flex items-center gap-2 mt-0.5">
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2 mt-0.5">
               {activeSprint ? activeSprint.name : "No Active Sprint"}
               {!activeSprint && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-400 border border-white/10">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900/5 text-slate-500 border border-slate-900/10">
                   Plan Sprints in Backlog
                 </span>
               )}
@@ -187,13 +187,13 @@ export default function KanbanBoard({
         <div className="flex flex-wrap items-center gap-3 mt-5">
           {/* Search Input */}
           <div className="relative w-64">
-            <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-500" />
             <input
               type="text"
               placeholder="Search issues, summary..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full glass-input rounded-full py-2 pl-10 pr-4 text-xs text-slate-200 focus:bg-white/10 transition-all"
+              className="w-full glass-input rounded-full py-2 pl-10 pr-4 text-xs text-slate-800 focus:bg-slate-900/5 transition-all"
             />
           </div>
 
@@ -203,7 +203,7 @@ export default function KanbanBoard({
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-200 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="All">All Types</option>
               <option value="Epic">Epic</option>
@@ -219,7 +219,7 @@ export default function KanbanBoard({
             <select
               value={selectedAssignee}
               onChange={(e) => setSelectedAssignee(e.target.value)}
-              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-200 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="All">All People</option>
               {SEED_USERS.map((user) => (
@@ -236,7 +236,7 @@ export default function KanbanBoard({
             <select
               value={selectedPriority}
               onChange={(e) => setSelectedPriority(e.target.value)}
-              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-200 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800 cursor-pointer shadow-2xs"
             >
               <option value="All">All Priorities</option>
               <option value="Highest">Highest</option>
@@ -249,15 +249,15 @@ export default function KanbanBoard({
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="text-xs text-blue-600 hover:text-blue-700 font-bold px-3 py-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              className="text-xs text-blue-600 hover:text-blue-700 font-bold px-3 py-1.5 rounded-xl hover:bg-slate-900/5 transition-colors cursor-pointer"
             >
               Clear Filters
             </button>
           )}
 
           {/* Issue Counter stats */}
-          <div className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
-            Showing <strong className="text-slate-200">{filteredIssues.length}</strong> of {activeSprintIssues.length} active issues
+          <div className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-900/5 border border-slate-900/10 px-3 py-1.5 rounded-full backdrop-blur-md">
+            Showing <strong className="text-slate-800">{filteredIssues.length}</strong> of {activeSprintIssues.length} active issues
           </div>
         </div>
       </div>
@@ -275,13 +275,13 @@ export default function KanbanBoard({
                 id={`column-${column.toLowerCase().replace(" ", "-")}`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column)}
-                className="flex-1 min-w-[250px] bg-white/10 backdrop-blur-md rounded-2xl p-4 flex flex-col border border-white/10 shadow-xs"
+                className="flex-1 min-w-[250px] bg-slate-900/5 backdrop-blur-md rounded-2xl p-4 flex flex-col border border-slate-900/10 shadow-xs"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between mb-4 px-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{column}</span>
-                    <span className="text-[10px] bg-white/10 text-slate-300 px-2 py-0.5 rounded-full border border-white/10 font-bold shadow-2xs">
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-500">{column}</span>
+                    <span className="text-[10px] bg-slate-900/5 text-slate-700 px-2 py-0.5 rounded-full border border-slate-900/10 font-bold shadow-2xs">
                       {columnIssues.length}
                     </span>
                   </div>
@@ -295,7 +295,7 @@ export default function KanbanBoard({
                 {/* Column Card Container */}
                 <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-290px)] scrollbar-thin">
                   {columnIssues.length === 0 ? (
-                    <div className="border border-dashed border-white/10 bg-white/10 rounded-2xl py-12 text-center text-slate-500 text-xs font-semibold">
+                    <div className="border border-dashed border-slate-900/10 bg-slate-900/5 rounded-2xl py-12 text-center text-slate-500 text-xs font-semibold">
                       Drag issues here
                     </div>
                   ) : (
@@ -313,7 +313,7 @@ export default function KanbanBoard({
                           className={`p-4 rounded-2xl glass-card border cursor-pointer group relative ${
                             isDone ? "glass-card-done" : ""
                           } ${
-                            isHighPriority && !isDone ? "border-l-4 border-l-amber-500 border-white/10" : "border-white/10"
+                            isHighPriority && !isDone ? "border-l-4 border-l-amber-500 border-slate-900/10" : "border-slate-900/10"
                           }`}
                         >
                           {/* Issue Type, Key, and Priority */}
@@ -330,18 +330,18 @@ export default function KanbanBoard({
                           </div>
 
                           {/* Issue Title */}
-                          <h4 className={`text-sm font-semibold text-slate-200 leading-snug mb-3 ${isDone ? "line-through text-slate-400" : ""}`}>
+                          <h4 className={`text-sm font-semibold text-slate-800 leading-snug mb-3 ${isDone ? "line-through text-slate-500" : ""}`}>
                             {issue.summary}
                           </h4>
 
                           {/* Story Points & Assignee */}
-                          <div className="flex items-center justify-between pt-2.5 border-t border-white/10">
+                          <div className="flex items-center justify-between pt-2.5 border-t border-slate-900/10">
                             {issue.storyPoints ? (
-                              <span className="text-[10px] font-bold px-2 py-0.5 bg-white/10 border border-white/10 text-slate-400 rounded-full" title="Story Points">
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-900/5 border border-slate-900/10 text-slate-500 rounded-full" title="Story Points">
                                 {issue.storyPoints}
                               </span>
                             ) : (
-                              <span className="text-[10px] text-slate-400 italic">No SP</span>
+                              <span className="text-[10px] text-slate-500 italic">No SP</span>
                             )}
 
                             <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ export default function KanbanBoard({
                           </div>
 
                           {/* Quick state-selector overlay (visible on hover) for easy access */}
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all flex gap-1 bg-white/80 p-1 rounded-xl shadow-md border border-white/10 backdrop-blur-md">
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all flex gap-1 bg-white/80 p-1 rounded-xl shadow-md border border-slate-900/10 backdrop-blur-md">
                             <select
                               onClick={(e) => e.stopPropagation()}
                               value={issue.status}
@@ -369,7 +369,7 @@ export default function KanbanBoard({
                                 e.stopPropagation();
                                 onUpdateIssueStatus(issue.id, e.target.value as IssueStatus);
                               }}
-                              className="text-[10px] font-bold text-slate-200 bg-transparent border-0 focus:ring-0 cursor-pointer rounded-lg px-1.5 py-0.5"
+                              className="text-[10px] font-bold text-slate-800 bg-transparent border-0 focus:ring-0 cursor-pointer rounded-lg px-1.5 py-0.5"
                             >
                               {COLUMNS.map((col) => (
                                 <option key={col} value={col}>{col}</option>
@@ -389,15 +389,15 @@ export default function KanbanBoard({
 
       {/* Quick Create Issue Modal */}
       {isQuickCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
-          <div className="glass-panel rounded-3xl shadow-2xl border border-white/10 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 bg-white/10 text-slate-200 border-b border-white/10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50/40 backdrop-blur-sm">
+          <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 text-slate-800 border-b border-slate-900/10">
               <h3 className="font-bold flex items-center gap-2">
                 <CheckSquare className="w-5 h-5 text-blue-600" /> Create Issue in Active Sprint
               </h3>
               <button 
                 onClick={() => setIsQuickCreateOpen(false)}
-                className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-500 cursor-pointer"
+                className="p-1 hover:bg-slate-900/5 rounded-full transition-colors text-slate-500 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -495,11 +495,11 @@ export default function KanbanBoard({
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-900/10">
                 <button
                   type="button"
                   onClick={() => setIsQuickCreateOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
