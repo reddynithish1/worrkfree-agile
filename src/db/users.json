@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "user-1782915374774",
+    "name": "Test User",
+    "email": "test@example.com",
+    "passwordHash": "$2b$10$GK81ArEyIkCcUOronvnffuG/4Cfxc5ekepYiRArozzb5gWVNbyI9O",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+  }
+]
