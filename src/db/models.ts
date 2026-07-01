@@ -21,8 +21,7 @@ const UserSchema = new Schema<IUser>({
   createdAt: { type: String, required: true }
 });
 
-export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
-
+export const UserModel = (mongoose.models.User as mongoose.Model<IUser>) || mongoose.model<IUser>('User', UserSchema);
 
 // Project Schema
 export interface IProjectMember {
@@ -57,8 +56,7 @@ const ProjectSchema = new Schema<IProject>({
   createdAt: { type: String, default: () => new Date().toISOString() }
 });
 
-export const ProjectModel = mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema);
-
+export const ProjectModel = (mongoose.models.Project as mongoose.Model<IProject>) || mongoose.model<IProject>('Project', ProjectSchema);
 
 // Task/Issue Schema
 export interface IIssue extends Document {
@@ -83,8 +81,7 @@ const IssueSchema = new Schema<IIssue>({
   createdAt: { type: String, default: () => new Date().toISOString() }
 });
 
-export const IssueModel = mongoose.models.Issue || mongoose.model<IIssue>('Issue', IssueSchema);
-
+export const IssueModel = (mongoose.models.Issue as mongoose.Model<IIssue>) || mongoose.model<IIssue>('Issue', IssueSchema);
 
 // ChatMessage Schema
 export interface IChatMessage extends Document {
@@ -107,4 +104,4 @@ const ChatMessageSchema = new Schema<IChatMessage>({
   timestamp: { type: String, required: true }
 });
 
-export const ChatMessageModel = mongoose.models.ChatMessage || mongoose.model<IChatMessage>('ChatMessage', ChatMessageSchema);
+export const ChatMessageModel = (mongoose.models.ChatMessage as mongoose.Model<IChatMessage>) || mongoose.model<IChatMessage>('ChatMessage', ChatMessageSchema);
