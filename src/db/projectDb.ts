@@ -1,7 +1,4 @@
-import fs from "fs";
-import path from "path";
-
-const PROJECTS_FILE = path.join(process.cwd(), "src", "db", "projects.json");
+import { ProjectModel } from "./models";
 
 export interface ProjectMember {
   userId: string;
@@ -18,24 +15,21 @@ export interface BackendProject {
   members: ProjectMember[];
 }
 
-export function getProjects(): BackendProject[] {
+export async function getProjects(): Promise<BackendProject[]> {
   try {
-    if (!fs.existsSync(PROJECTS_FILE)) {
-      return [];
-    }
-    const data = fs.readFileSync(PROJECTS_FILE, "utf-8");
-    return JSON.parse(data);
+    const projects = await ProjectModel.find().lean();
+    return projects.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      key: p.key,
+      description: p.description,
+      inviteCode: p.inviteCode,
+      ownerId: p.ownerId,
+      members: p.members
+    }));
   } catch (error) {
-    console.error("Error reading projects.json", error);
+    console.error("Error reading projects from DB", error);
     return [];
-  }
-}
-
-export function saveProjects(projects: BackendProject[]) {
-  try {
-    fs.writeFileSync(PROJECTS_FILE, JSON.stringify(projects, null, 2));
-  } catch (error) {
-    console.error("Error writing to projects.json", error);
   }
 }
 
@@ -48,14 +42,14 @@ function generateInviteCode(): string {
   return code;
 }
 
-export function createProject(id: string, name: string, key: string, description: string, ownerId: string): BackendProject {
-  const projects = getProjects();
+export async function createProject(id: string, name: string, key: string, description: string, ownerId: string): Promise<BackendProject> {
+  const existing = await ProjectModel.findOne({ id });
   
-  if (projects.find(p => p.id === id)) {
+  if (existing) {
     throw new Error("Project with this ID already exists in backend");
   }
 
-  const newProject: BackendProject = {
+  const newProject = await ProjectModel.create({
     id,
     name,
     key,
@@ -63,60 +57,67 @@ export function createProject(id: string, name: string, key: string, description
     inviteCode: generateInviteCode(),
     ownerId,
     members: [{ userId: ownerId, joinedAt: new Date().toISOString() }]
+  });
+
+  return {
+    id: newProject.id,
+    name: newProject.name,
+    key: newProject.key,
+    description: newProject.description,
+    inviteCode: newProject.inviteCode,
+    ownerId: newProject.ownerId,
+    members: newProject.members
   };
-
-  projects.push(newProject);
-  saveProjects(projects);
-
-  return newProject;
 }
 
-export function joinProject(inviteCode: string, userId: string): BackendProject {
-  const projects = getProjects();
-  const project = projects.find(p => p.inviteCode === inviteCode);
+export async function joinProject(inviteCode: string, userId: string): Promise<BackendProject> {
+  const project = await ProjectModel.findOne({ inviteCode });
 
   if (!project) {
     throw new Error("Invalid invite code");
   }
 
-  if (!project.members.find(m => m.userId === userId)) {
+  if (!project.members.find((m: any) => m.userId === userId)) {
     project.members.push({ userId, joinedAt: new Date().toISOString() });
-    saveProjects(projects);
+    await project.save();
   }
 
-  return project;
+  return {
+    id: project.id,
+    name: project.name,
+    key: project.key,
+    description: project.description,
+    inviteCode: project.inviteCode,
+    ownerId: project.ownerId,
+    members: project.members
+  };
 }
 
-export function getProjectMembers(projectId: string): ProjectMember[] {
-  const projects = getProjects();
-  const project = projects.find(p => p.id === projectId);
+export async function getProjectMembers(projectId: string): Promise<ProjectMember[]> {
+  const project = await ProjectModel.findOne({ id: projectId });
   if (!project) return [];
   return project.members;
 }
 
-export function getInviteCode(projectId: string, userId: string): string | null {
-  const projects = getProjects();
-  const project = projects.find(p => p.id === projectId);
+export async function getInviteCode(projectId: string, userId: string): Promise<string | null> {
+  const project = await ProjectModel.findOne({ id: projectId });
   
   if (!project) return null;
   
   // Only members can see the invite code
-  if (!project.members.find(m => m.userId === userId)) {
+  if (!project.members.find((m: any) => m.userId === userId)) {
     return null;
   }
   
   return project.inviteCode;
 }
 
-export function updateProject(projectId: string, ownerId: string, updates: Partial<BackendProject>): BackendProject {
-  const projects = getProjects();
-  const index = projects.findIndex(p => p.id === projectId);
+export async function updateProject(projectId: string, ownerId: string, updates: Partial<BackendProject>): Promise<BackendProject> {
+  const project = await ProjectModel.findOne({ id: projectId });
   
-  if (index === -1) {
+  if (!project) {
     throw new Error("Project not found");
   }
-
-  const project = projects[index];
   
   if (project.ownerId !== ownerId) {
     throw new Error("Only the project owner can edit this project");
@@ -126,24 +127,29 @@ export function updateProject(projectId: string, ownerId: string, updates: Parti
   if (updates.key) project.key = updates.key;
   if (updates.description !== undefined) project.description = updates.description;
 
-  projects[index] = project;
-  saveProjects(projects);
+  await project.save();
 
-  return project;
+  return {
+    id: project.id,
+    name: project.name,
+    key: project.key,
+    description: project.description,
+    inviteCode: project.inviteCode,
+    ownerId: project.ownerId,
+    members: project.members
+  };
 }
 
-export function deleteProject(projectId: string, ownerId: string) {
-  const projects = getProjects();
-  const index = projects.findIndex(p => p.id === projectId);
+export async function deleteProject(projectId: string, ownerId: string): Promise<void> {
+  const project = await ProjectModel.findOne({ id: projectId });
   
-  if (index === -1) {
+  if (!project) {
     throw new Error("Project not found");
   }
 
-  if (projects[index].ownerId !== ownerId) {
+  if (project.ownerId !== ownerId) {
     throw new Error("Only the project owner can delete this project");
   }
 
-  projects.splice(index, 1);
-  saveProjects(projects);
+  await ProjectModel.deleteOne({ id: projectId });
 }

@@ -14,6 +14,7 @@ import {
   getInviteCode
 } from "./src/db/projectDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
+import { connectDB } from "./src/db/mongoose";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
@@ -30,18 +31,18 @@ const io = new SocketIOServer(httpServer, {
 const PORT = 3000;
 
 // Socket.io integration
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   // Send chat history when connected
-  socket.emit("chat_history", getMessages());
+  socket.emit("chat_history", await getMessages());
 
-  socket.on("send_message", (data) => {
+  socket.on("send_message", async (data) => {
     // data: { userId, userName, userAvatar, text }
     const message = {
       id: Date.now().toString() + Math.random().toString(36).substring(7),
       ...data,
       timestamp: new Date().toISOString()
     };
-    saveMessage(message);
+    await saveMessage(message);
     io.emit("new_message", message);
   });
 
@@ -55,7 +56,7 @@ app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 // Health check endpoint for Docker & CI/CD
-app.get("/health", (req, res) => {
+app.get("/health", async (req, res) => {
   res.json({ status: "ok" });
 });
 
@@ -116,13 +117,13 @@ app.post("/api/auth/login", authLimiter, async (req, res) => {
   }
 });
 
-app.post("/api/auth/logout", (req, res) => {
+app.post("/api/auth/logout", async (req, res) => {
   res.clearCookie("token");
   res.json({ success: true });
 });
 
-app.get("/api/auth/me", authenticateToken, (req: any, res: any) => {
-  const users = getUsers();
+app.get("/api/auth/me", authenticateToken, async (req: any, res: any) => {
+  const users = await getUsers();
   const user = users.find((u: any) => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: "User not found" });
   res.json({ user });
@@ -232,7 +233,7 @@ app.patch("/api/user/profile", authenticateToken, async (req: any, res: any) => 
 app.get("/api/projects", authenticateToken, async (req: any, res: any) => {
   try {
     const userId = req.user.id;
-    const allProjects = getProjects();
+    const allProjects = await getProjects();
     // Only return projects where the user is a member
     const userProjects = allProjects.filter(p => p.members.some(m => m.userId === userId));
     res.json(userProjects);
@@ -250,10 +251,10 @@ app.post("/api/projects", authenticateToken, async (req: any, res: any) => {
     if (!name || !key) return res.status(400).json({ error: "Name and key are required" });
     
     const projectId = id || `proj-${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
-    const project = createProject(projectId, name, key, description, userId);
+    const project = await createProject(projectId, name, key, description, userId);
     
     // Add to user's joinedProjects
-    joinUserToProject(userId, project.id);
+    await await joinUserToProject(userId, project.id);
     
     res.json(project);
   } catch (error: any) {
@@ -269,7 +270,7 @@ app.post("/api/projects/join", authenticateToken, async (req: any, res: any) => 
     
     if (!inviteCode) return res.status(400).json({ error: "Invite code is required" });
     
-    const project = joinProject(inviteCode, userId);
+    const project = await joinProject(inviteCode, userId);
     joinUserToProject(userId, project.id);
     
     res.json(project);
@@ -281,8 +282,8 @@ app.post("/api/projects/join", authenticateToken, async (req: any, res: any) => 
 // Get Project Members
 app.get("/api/projects/:id/members", authenticateToken, async (req: any, res: any) => {
   try {
-    const members = getProjectMembers(req.params.id);
-    const users = getUsers();
+    const members = await getProjectMembers(req.params.id);
+    const users = await getUsers();
     const detailedMembers = members.map(m => {
       const user = users.find(u => u.id === m.userId);
       return {
@@ -302,7 +303,7 @@ app.get("/api/projects/:id/members", authenticateToken, async (req: any, res: an
 app.get("/api/projects/:id/invite-code", authenticateToken, async (req: any, res: any) => {
   try {
     const userId = req.user.id;
-    const code = getInviteCode(req.params.id, userId);
+    const code = await getInviteCode(req.params.id, userId);
     
     if (!code) return res.status(403).json({ error: "Not authorized to view invite code" });
     
@@ -317,7 +318,7 @@ app.patch("/api/projects/:id", authenticateToken, async (req: any, res: any) => 
   try {
     const userId = req.user.id;
     const { name, key, description } = req.body;
-    const project = updateProject(req.params.id, userId, { name, key, description });
+    const project = await updateProject(req.params.id, userId, { name, key, description });
     res.json(project);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -331,10 +332,10 @@ app.delete("/api/projects/:id", authenticateToken, async (req: any, res: any) =>
     const projectId = req.params.id;
     
     // 1. Delete from projects DB (validates ownership)
-    deleteProject(projectId, userId);
+    await deleteProject(projectId, userId);
     
     // 2. Remove project from all users' profiles
-    removeProjectFromAllUsers(projectId);
+    await removeProjectFromAllUsers(projectId);
     
     res.json({ message: "Project deleted successfully" });
   } catch (error: any) {
@@ -506,6 +507,7 @@ For each issue, provide:
 
 // Express serving + Vite compilation
 async function startServer() {
+  await connectDB();
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -515,7 +517,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get("*", async (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

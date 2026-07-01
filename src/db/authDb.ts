@@ -1,33 +1,26 @@
-import fs from "fs";
-import path from "path";
 import { User, UserCredentials } from "../types";
 import bcrypt from "bcryptjs";
+import { UserModel } from "./models";
 
-const USERS_FILE = path.join(process.cwd(), "src", "db", "users.json");
-
-export function getUsers(): UserCredentials[] {
+export async function getUsers(): Promise<UserCredentials[]> {
   try {
-    if (!fs.existsSync(USERS_FILE)) {
-      return [];
-    }
-    const data = fs.readFileSync(USERS_FILE, "utf-8");
-    return JSON.parse(data);
+    const users = await UserModel.find().lean();
+    return users.map((u: any) => ({
+      id: u.id,
+      displayName: u.displayName,
+      email: u.email,
+      passwordHash: u.passwordHash,
+      avatar: u.avatar,
+      projects: u.projects || [],
+      createdAt: u.createdAt
+    }));
   } catch (error) {
-    console.error("Error reading users.json", error);
+    console.error("Error fetching users from DB", error);
     return [];
   }
 }
 
-export function saveUsers(users: UserCredentials[]) {
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-  } catch (error) {
-    console.error("Error writing to users.json", error);
-  }
-}
-
 export async function createUser(emailRaw: string, passwordPlain: string, displayName: string): Promise<User> {
-  const users = getUsers();
   const email = emailRaw.trim().toLowerCase();
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,26 +28,24 @@ export async function createUser(emailRaw: string, passwordPlain: string, displa
     throw new Error("Invalid email format");
   }
 
-  if (users.find(u => u.email === email)) {
+  const existingUser = await UserModel.findOne({ email });
+  if (existingUser) {
     throw new Error("An account with this email already exists");
   }
 
   const hashedPassword = await bcrypt.hash(passwordPlain, 10);
+  const id = "user-" + Date.now();
   
-  const newUser: UserCredentials = {
-    id: "user-" + Date.now(),
+  const newUser = await UserModel.create({
+    id,
     displayName,
     email,
     passwordHash: hashedPassword,
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
     projects: [],
     createdAt: new Date().toISOString()
-  };
+  });
 
-  users.push(newUser);
-  saveUsers(users);
-
-  // Return the safe user object (no password)
   return {
     id: newUser.id,
     displayName: newUser.displayName,
@@ -67,8 +58,8 @@ export async function createUser(emailRaw: string, passwordPlain: string, displa
 
 export async function verifyUser(emailRaw: string, passwordPlain: string): Promise<User | null> {
   const email = emailRaw.trim().toLowerCase();
-  const users = getUsers();
-  const user = users.find(u => u.email === email);
+  
+  const user = await UserModel.findOne({ email });
   if (!user) return null;
 
   const isValid = await bcrypt.compare(passwordPlain, user.passwordHash);
@@ -89,14 +80,11 @@ export async function updateUser(
   updates: { displayName?: string; avatar?: string }, 
   passwords?: { current: string; new: string }
 ): Promise<User> {
-  const users = getUsers();
-  const index = users.findIndex(u => u.id === id);
+  const user = await UserModel.findOne({ id });
   
-  if (index === -1) {
+  if (!user) {
     throw new Error("User not found");
   }
-
-  const user = users[index];
 
   // Handle password update if provided
   if (passwords && passwords.current && passwords.new) {
@@ -111,8 +99,7 @@ export async function updateUser(
   if (updates.displayName) user.displayName = updates.displayName;
   if (updates.avatar) user.avatar = updates.avatar;
 
-  users[index] = user;
-  saveUsers(users);
+  await user.save();
 
   return {
     id: user.id,
@@ -124,32 +111,20 @@ export async function updateUser(
   };
 }
 
-export function joinUserToProject(userId: string, projectId: string) {
-  const users = getUsers();
-  const index = users.findIndex(u => u.id === userId);
-  if (index !== -1) {
-    const user = users[index];
+export async function joinUserToProject(userId: string, projectId: string) {
+  const user = await UserModel.findOne({ id: userId });
+  if (user) {
     if (!user.projects) user.projects = [];
     if (!user.projects.includes(projectId)) {
       user.projects.push(projectId);
-      users[index] = user;
-      saveUsers(users);
+      await user.save();
     }
   }
 }
 
-export function removeProjectFromAllUsers(projectId: string) {
-  const users = getUsers();
-  let modified = false;
-
-  for (const user of users) {
-    if (user.projects && user.projects.includes(projectId)) {
-      user.projects = user.projects.filter(id => id !== projectId);
-      modified = true;
-    }
-  }
-
-  if (modified) {
-    saveUsers(users);
-  }
+export async function removeProjectFromAllUsers(projectId: string) {
+  await UserModel.updateMany(
+    { projects: projectId },
+    { $pull: { projects: projectId } }
+  );
 }

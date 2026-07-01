@@ -1,7 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-
-const DB_PATH = path.join(process.cwd(), 'src/db/messages.json');
+import { ChatMessageModel } from "./models";
 
 export interface ChatMessage {
   id: string;
@@ -12,36 +9,39 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-// Ensure the db directory and file exist
-if (!fs.existsSync(path.dirname(DB_PATH))) {
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-}
-if (!fs.existsSync(DB_PATH)) {
-  fs.writeFileSync(DB_PATH, JSON.stringify([]));
-}
-
-export function getMessages(): ChatMessage[] {
+export async function getMessages(): Promise<ChatMessage[]> {
   try {
-    const data = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(data);
+    // Fetch last 1000 messages and sort by timestamp
+    const messages = await ChatMessageModel.find()
+      .sort({ timestamp: 1 })
+      .limit(1000)
+      .lean();
+      
+    return messages.map((m: any) => ({
+      id: m.id,
+      userId: m.userId,
+      userName: m.userName,
+      userAvatar: m.userAvatar,
+      text: m.text,
+      timestamp: m.timestamp
+    }));
   } catch (error) {
-    console.error("Error reading messages database:", error);
+    console.error("Error reading messages from DB:", error);
     return [];
   }
 }
 
-export function saveMessage(message: ChatMessage): void {
+export async function saveMessage(message: ChatMessage): Promise<void> {
   try {
-    const messages = getMessages();
-    messages.push(message);
-    
-    // Optional: Keep only the last 1000 messages to prevent infinite file growth
-    if (messages.length > 1000) {
-      messages.shift();
-    }
-    
-    fs.writeFileSync(DB_PATH, JSON.stringify(messages, null, 2));
+    await ChatMessageModel.create({
+      id: message.id,
+      userId: message.userId,
+      userName: message.userName,
+      userAvatar: message.userAvatar,
+      text: message.text,
+      timestamp: message.timestamp
+    });
   } catch (error) {
-    console.error("Error writing to messages database:", error);
+    console.error("Error saving message to DB:", error);
   }
 }
