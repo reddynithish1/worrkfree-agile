@@ -107,3 +107,43 @@ export function getInviteCode(projectId: string, userId: string): string | null 
   
   return project.inviteCode;
 }
+
+export function updateProject(projectId: string, ownerId: string, updates: Partial<BackendProject>): BackendProject {
+  const projects = getProjects();
+  const index = projects.findIndex(p => p.id === projectId);
+  
+  if (index === -1) {
+    throw new Error("Project not found");
+  }
+
+  const project = projects[index];
+  
+  if (project.ownerId !== ownerId) {
+    throw new Error("Only the project owner can edit this project");
+  }
+
+  if (updates.name) project.name = updates.name;
+  if (updates.key) project.key = updates.key;
+  if (updates.description !== undefined) project.description = updates.description;
+
+  projects[index] = project;
+  saveProjects(projects);
+
+  return project;
+}
+
+export function deleteProject(projectId: string, ownerId: string) {
+  const projects = getProjects();
+  const index = projects.findIndex(p => p.id === projectId);
+  
+  if (index === -1) {
+    throw new Error("Project not found");
+  }
+
+  if (projects[index].ownerId !== ownerId) {
+    throw new Error("Only the project owner can delete this project");
+  }
+
+  projects.splice(index, 1);
+  saveProjects(projects);
+}

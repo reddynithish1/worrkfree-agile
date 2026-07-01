@@ -1,22 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { Project, User } from '../types';
-import { X, Copy, CheckCircle2, Users } from 'lucide-react';
+import { X, Copy, CheckCircle2, Users, Settings2, Trash2, AlertTriangle } from 'lucide-react';
 
 interface ProjectSettingsModalProps {
   project: Project | null;
+  currentUser: User | null;
   isOpen: boolean;
   onClose: () => void;
+  onUpdateProject: (updated: Project) => void;
+  onDeleteProject: (projectId: string) => void;
 }
 
-export default function ProjectSettingsModal({ project, isOpen, onClose }: ProjectSettingsModalProps) {
+export default function ProjectSettingsModal({ 
+  project, currentUser, isOpen, onClose, onUpdateProject, onDeleteProject 
+}: ProjectSettingsModalProps) {
+  const [activeTab, setActiveTab] = useState<'members' | 'edit' | 'danger'>('members');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Edit State
+  const [editName, setEditName] = useState("");
+  const [editKey, setEditKey] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Delete State
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOwner = Boolean(project && currentUser && project.ownerId === currentUser.id);
+
   useEffect(() => {
     if (isOpen && project) {
       loadProjectData();
+      setEditName(project.name);
+      setEditKey(project.key);
+      setEditDesc(project.description || "");
+      setActiveTab('members');
+      setDeleteConfirm("");
     }
   }, [isOpen, project]);
 
@@ -53,6 +76,41 @@ export default function ProjectSettingsModal({ project, isOpen, onClose }: Proje
     }
   };
 
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, key: editKey, description: editDesc })
+      });
+      if (!res.ok) throw new Error("Failed to update project");
+      const updated = await res.json();
+      onUpdateProject(updated);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!project || deleteConfirm !== project.name) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete project");
+      onDeleteProject(project.id);
+      onClose();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (!isOpen || !project) return null;
 
   return (
@@ -78,9 +136,36 @@ export default function ProjectSettingsModal({ project, isOpen, onClose }: Proje
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-8">
+        <div className="flex items-center gap-6 px-6 border-b border-slate-900/10">
+          <button 
+            onClick={() => setActiveTab('members')}
+            className={`py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'members' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+          >
+            Members
+          </button>
+          {isOwner && (
+            <>
+              <button 
+                onClick={() => setActiveTab('edit')}
+                className={`py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'edit' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+              >
+                Edit Details
+              </button>
+              <button 
+                onClick={() => setActiveTab('danger')}
+                className={`py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'danger' ? 'border-rose-600 text-rose-600' : 'border-transparent text-rose-400 hover:text-rose-600'}`}
+              >
+                Danger Zone
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="p-6 overflow-y-auto space-y-8 flex-1">
           
-          {/* Invite Code Section */}
+          {activeTab === 'members' && (
+            <>
+              {/* Invite Code Section */}
           <div className="space-y-3">
             <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-500" />
@@ -150,6 +235,62 @@ export default function ProjectSettingsModal({ project, isOpen, onClose }: Proje
               )}
             </div>
           </div>
+          </>
+          )}
+
+          {isOwner && activeTab === 'edit' && (
+            <form onSubmit={handleUpdate} className="space-y-5 animate-in fade-in duration-300">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Project Name</label>
+                <input required type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Project Key</label>
+                <input required type="text" value={editKey} onChange={(e) => setEditKey(e.target.value.toUpperCase())} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl" maxLength={10} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label>
+                <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl h-24 resize-none" />
+              </div>
+              <div className="pt-4 flex justify-end">
+                <button type="submit" disabled={isSaving} className="px-5 py-2 text-sm font-semibold glass-button-primary rounded-full disabled:opacity-50">
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {isOwner && activeTab === 'danger' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 space-y-3 text-rose-800">
+                <h4 className="font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Delete Project
+                </h4>
+                <p className="text-sm">
+                  Are you sure? This will permanently delete the project and all its tasks. This action cannot be undone.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-600">Please type <strong>{project.name}</strong> to confirm.</label>
+                <input 
+                  type="text" 
+                  value={deleteConfirm} 
+                  onChange={(e) => setDeleteConfirm(e.target.value)} 
+                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl"
+                  placeholder={project.name}
+                />
+              </div>
+
+              <button 
+                onClick={handleDelete}
+                disabled={isDeleting || deleteConfirm !== project.name}
+                className="w-full py-3 rounded-xl font-bold text-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 transition-colors"
+              >
+                {isDeleting ? 'Deleting...' : 'Permanently Delete Project'}
+              </button>
+            </div>
+          )}
 
         </div>
 

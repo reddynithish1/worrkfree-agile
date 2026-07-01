@@ -312,6 +312,17 @@ export default function App() {
     }
   };
 
+  const handleProjectUpdated = (updatedProj: Project) => {
+    setProjects(prev => prev.map(p => p.id === updatedProj.id ? updatedProj : p));
+  };
+
+  const handleProjectDeleted = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    if (activeProjectId === projectId) {
+      setActiveProjectId("");
+    }
+  };
+
   if (isAuthLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-slate-50 text-slate-900">
@@ -783,8 +794,11 @@ export default function App() {
         {/* Project Settings Modal */}
         <ProjectSettingsModal
           project={currentProject || null}
+          currentUser={currentUser}
           isOpen={isProjectSettingsOpen}
           onClose={() => setIsProjectSettingsOpen(false)}
+          onUpdateProject={handleProjectUpdated}
+          onDeleteProject={handleProjectDeleted}
         />
 
         {/* Join Project Modal (Global) */}

@@ -124,3 +124,19 @@ export function joinUserToProject(userId: string, projectId: string) {
     }
   }
 }
+
+export function removeProjectFromAllUsers(projectId: string) {
+  const users = getUsers();
+  let modified = false;
+
+  for (const user of users) {
+    if (user.joinedProjects && user.joinedProjects.includes(projectId)) {
+      user.joinedProjects = user.joinedProjects.filter(id => id !== projectId);
+      modified = true;
+    }
+  }
+
+  if (modified) {
+    saveUsers(users);
+  }
+}

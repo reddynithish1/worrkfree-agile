@@ -8,6 +8,7 @@ export interface Project {
   name: string;
   key: string; // e.g. "KAN"
   description: string;
+  ownerId?: string;
 }
 
 export interface Comment {

@@ -3,8 +3,8 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
-import { createUser, verifyUser, getUsers, updateUser, joinUserToProject } from "./src/db/authDb";
-import { createProject, joinProject, getProjectMembers, getInviteCode } from "./src/db/projectDb";
+import { createUser, verifyUser, getUsers, updateUser, joinUserToProject, removeProjectFromAllUsers } from "./src/db/authDb";
+import { createProject, joinProject, getProjectMembers, getInviteCode, updateProject, deleteProject } from "./src/db/projectDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
@@ -284,6 +284,36 @@ app.get("/api/projects/:id/invite-code", authenticateToken, async (req: any, res
     if (!code) return res.status(403).json({ error: "Not authorized to view invite code" });
     
     res.json({ inviteCode: code });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update Project
+app.patch("/api/projects/:id", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const { name, key, description } = req.body;
+    const project = updateProject(req.params.id, userId, { name, key, description });
+    res.json(project);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete Project
+app.delete("/api/projects/:id", authenticateToken, async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+    const projectId = req.params.id;
+    
+    // 1. Delete from projects DB (validates ownership)
+    deleteProject(projectId, userId);
+    
+    // 2. Remove project from all users' profiles
+    removeProjectFromAllUsers(projectId);
+    
+    res.json({ message: "Project deleted successfully" });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
