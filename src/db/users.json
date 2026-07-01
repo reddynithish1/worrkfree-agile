@@ -5,5 +5,12 @@
     "email": "test@example.com",
     "passwordHash": "$2b$10$GK81ArEyIkCcUOronvnffuG/4Cfxc5ekepYiRArozzb5gWVNbyI9O",
     "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+  },
+  {
+    "id": "user-1782924665633",
+    "name": "nithish",
+    "email": "reddynithishkanji1@gmail.com",
+    "passwordHash": "$2b$10$CHH7LZK4TtufHLatcl2DY.I5m6fpyasYrSPIL5wSbnz1448KBxycK",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
   }
 ]

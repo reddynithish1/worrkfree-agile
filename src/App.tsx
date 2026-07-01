@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Folder, Calendar, Sparkles, BarChart2, CheckSquare, Plus, ChevronDown, 
-  Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X 
+  Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X, MessageSquare 
 } from "lucide-react";
 
 // Modular imports
@@ -13,6 +13,7 @@ import AICopilot from "./components/AICopilot";
 import InsightsView from "./components/InsightsView";
 import IssueDetailDrawer from "./components/IssueDetailDrawer";
 import AuthView from "./components/AuthView";
+import ChatPanel from "./components/ChatPanel";
 
 export default function App() {
   // Global Workspace States
@@ -22,6 +23,9 @@ export default function App() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [activeTab, setActiveTab] = useState<ActiveTab>("board");
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  
+  // Chat Panel State
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // New Project Modal State
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
@@ -393,6 +397,16 @@ export default function App() {
                   <BarChart2 className={`w-4 h-4 ${activeTab === "insights" ? "text-blue-600" : "text-slate-500"}`} />
                   <span>Reports & Insights</span>
                 </button>
+
+                <div className="pt-4 mt-2 border-t border-slate-900/10">
+                  <button
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer text-slate-500 hover:bg-slate-900/5 hover:text-slate-900"
+                  >
+                    <MessageSquare className="w-4 h-4 text-slate-500" />
+                    <span>Workspace Chat</span>
+                  </button>
+                </div>
               </nav>
             </div>
           </div>
@@ -598,6 +612,13 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* Global Chat Panel */}
+        <ChatPanel 
+          user={currentUser} 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+        />
 
       </div>
     </>

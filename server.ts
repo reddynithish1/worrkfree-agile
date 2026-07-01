@@ -4,14 +4,42 @@ import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import { createUser, verifyUser, getUsers } from "./src/db/authDb";
+import { getMessages, saveMessage } from "./src/db/chatDb";
 import { createServer as createViteServer } from "vite";
+import { createServer as createHttpServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
+const httpServer = createHttpServer(app);
+const io = new SocketIOServer(httpServer, {
+  cors: { origin: "*" }
+});
 const PORT = 3000;
+
+// Socket.io integration
+io.on("connection", (socket) => {
+  // Send chat history when connected
+  socket.emit("chat_history", getMessages());
+
+  socket.on("send_message", (data) => {
+    // data: { userId, userName, userAvatar, text }
+    const message = {
+      id: Date.now().toString() + Math.random().toString(36).substring(7),
+      ...data,
+      timestamp: new Date().toISOString()
+    };
+    saveMessage(message);
+    io.emit("new_message", message);
+  });
+
+  socket.on("typing", (userName) => {
+    socket.broadcast.emit("user_typing", userName);
+  });
+});
 
 // Enable JSON body parsing with reasonable size limits
 app.use(express.json({ limit: "5mb" }));
@@ -323,7 +351,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
