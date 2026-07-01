@@ -43,7 +43,7 @@ function generateInviteCode(): string {
 }
 
 export async function createProject(id: string, name: string, key: string, description: string, ownerId: string): Promise<BackendProject> {
-  const existing = await ProjectModel.findOne({ id });
+  const existing = await ProjectModel.findOne({ id } as any);
   
   if (existing) {
     throw new Error("Project with this ID already exists in backend");
@@ -71,7 +71,7 @@ export async function createProject(id: string, name: string, key: string, descr
 }
 
 export async function joinProject(inviteCode: string, userId: string): Promise<BackendProject> {
-  const project = await ProjectModel.findOne({ inviteCode });
+  const project = await ProjectModel.findOne({ inviteCode } as any);
 
   if (!project) {
     throw new Error("Invalid invite code");
@@ -94,13 +94,13 @@ export async function joinProject(inviteCode: string, userId: string): Promise<B
 }
 
 export async function getProjectMembers(projectId: string): Promise<ProjectMember[]> {
-  const project = await ProjectModel.findOne({ id: projectId });
+  const project = await ProjectModel.findOne({ id: projectId } as any);
   if (!project) return [];
   return project.members;
 }
 
 export async function getInviteCode(projectId: string, userId: string): Promise<string | null> {
-  const project = await ProjectModel.findOne({ id: projectId });
+  const project = await ProjectModel.findOne({ id: projectId } as any);
   
   if (!project) return null;
   
@@ -113,7 +113,7 @@ export async function getInviteCode(projectId: string, userId: string): Promise<
 }
 
 export async function updateProject(projectId: string, ownerId: string, updates: Partial<BackendProject>): Promise<BackendProject> {
-  const project = await ProjectModel.findOne({ id: projectId });
+  const project = await ProjectModel.findOne({ id: projectId } as any);
   
   if (!project) {
     throw new Error("Project not found");
@@ -141,7 +141,7 @@ export async function updateProject(projectId: string, ownerId: string, updates:
 }
 
 export async function deleteProject(projectId: string, ownerId: string): Promise<void> {
-  const project = await ProjectModel.findOne({ id: projectId });
+  const project = await ProjectModel.findOne({ id: projectId } as any);
   
   if (!project) {
     throw new Error("Project not found");
@@ -151,5 +151,5 @@ export async function deleteProject(projectId: string, ownerId: string): Promise
     throw new Error("Only the project owner can delete this project");
   }
 
-  await ProjectModel.deleteOne({ id: projectId });
+  await ProjectModel.deleteOne({ id: projectId } as any);
 }

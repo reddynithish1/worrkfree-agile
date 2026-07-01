@@ -28,7 +28,7 @@ export async function createUser(emailRaw: string, passwordPlain: string, displa
     throw new Error("Invalid email format");
   }
 
-  const existingUser = await UserModel.findOne({ email });
+  const existingUser = await UserModel.findOne({ email } as any);
   if (existingUser) {
     throw new Error("An account with this email already exists");
   }
@@ -59,7 +59,7 @@ export async function createUser(emailRaw: string, passwordPlain: string, displa
 export async function verifyUser(emailRaw: string, passwordPlain: string): Promise<User | null> {
   const email = emailRaw.trim().toLowerCase();
   
-  const user = await UserModel.findOne({ email });
+  const user = await UserModel.findOne({ email } as any);
   if (!user) return null;
 
   const isValid = await bcrypt.compare(passwordPlain, user.passwordHash);
@@ -80,7 +80,7 @@ export async function updateUser(
   updates: { displayName?: string; avatar?: string }, 
   passwords?: { current: string; new: string }
 ): Promise<User> {
-  const user = await UserModel.findOne({ id });
+  const user = await UserModel.findOne({ id } as any);
   
   if (!user) {
     throw new Error("User not found");
@@ -112,7 +112,7 @@ export async function updateUser(
 }
 
 export async function joinUserToProject(userId: string, projectId: string) {
-  const user = await UserModel.findOne({ id: userId });
+  const user = await UserModel.findOne({ id: userId } as any);
   if (user) {
     if (!user.projects) user.projects = [];
     if (!user.projects.includes(projectId)) {
@@ -123,7 +123,7 @@ export async function joinUserToProject(userId: string, projectId: string) {
 }
 
 export async function removeProjectFromAllUsers(projectId: string) {
-  await UserModel.updateMany(
+  await (UserModel as any).updateMany(
     { projects: projectId },
     { $pull: { projects: projectId } }
   );

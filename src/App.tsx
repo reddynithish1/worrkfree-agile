@@ -33,12 +33,22 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Join Project Modal State
+  const [isJoinProjectOpen, setIsJoinProjectOpen] = useState(false);
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [joinError, setJoinError] = useState("");
   const [isJoining, setIsJoining] = useState(false);
 
   // Project Settings Modal State
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
+
+  // New Project State
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [newProjName, setNewProjName] = useState("");
+  const [newProjKey, setNewProjKey] = useState("");
+  const [newProjDesc, setNewProjDesc] = useState("");
+
+  // Mobile Sidebar State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Auth State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
