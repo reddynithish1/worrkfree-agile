@@ -53,7 +53,7 @@ export default function AuthView({ onLogin }: AuthViewProps) {
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
       <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-2000" />
       
-      <div className="w-full max-w-md p-8 glass-panel border border-slate-900/10 rounded-2xl shadow-2xl relative z-10 backdrop-blur-xl bg-white/5">
+      <div className="w-[calc(100%-2rem)] max-w-md p-6 md:p-8 glass-panel border border-slate-900/10 rounded-2xl shadow-2xl relative z-10 backdrop-blur-xl bg-white/5 mx-4 md:mx-0">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-blue-600/90 rounded-xl flex items-center justify-center text-slate-900 font-bold text-xl shadow-lg shadow-blue-500/25 mx-auto mb-4">
             W

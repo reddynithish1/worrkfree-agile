@@ -105,8 +105,8 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white md:rounded-2xl shadow-2xl w-full h-full md:h-auto md:max-w-md overflow-hidden md:border md:border-slate-200 flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
@@ -122,7 +122,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[80vh] space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto max-h-none md:max-h-[80vh] space-y-6">
           
           {/* Status Messages */}
           {error && (
@@ -188,7 +188,7 @@ export default function ProfileSettings({ user, isOpen, onClose, onProfileUpdate
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5">New Password</label>
                 <input

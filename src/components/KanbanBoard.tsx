@@ -263,8 +263,8 @@ export default function KanbanBoard({
       </div>
 
       {/* Grid of Board Columns */}
-      <div className="flex-1 overflow-x-auto p-6 bg-transparent">
-        <div className="flex gap-5 h-full min-w-[900px]">
+      <div className="flex-1 overflow-y-auto md:overflow-x-auto p-4 md:p-6 bg-transparent">
+        <div className="flex flex-col md:flex-row gap-5 md:h-full md:min-w-[900px]">
           {COLUMNS.map((column) => {
             const columnIssues = getIssuesByStatus(column);
             const totalPoints = getStoryPointsSum(column);
@@ -275,7 +275,7 @@ export default function KanbanBoard({
                 id={`column-${column.toLowerCase().replace(" ", "-")}`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column)}
-                className="flex-1 min-w-[250px] bg-slate-900/5 backdrop-blur-md rounded-2xl p-4 flex flex-col border border-slate-900/10 shadow-xs"
+                className="w-full md:flex-1 md:min-w-[250px] bg-slate-900/5 backdrop-blur-md rounded-2xl p-4 flex flex-col border border-slate-900/10 shadow-xs"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between mb-4 px-1">
@@ -293,7 +293,7 @@ export default function KanbanBoard({
                 </div>
 
                 {/* Column Card Container */}
-                <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-290px)] scrollbar-thin">
+                <div className="flex-1 space-y-3 overflow-y-auto max-h-[60vh] md:max-h-[calc(100vh-290px)] scrollbar-thin">
                   {columnIssues.length === 0 ? (
                     <div className="border border-dashed border-slate-900/10 bg-slate-900/5 rounded-2xl py-12 text-center text-slate-500 text-xs font-semibold">
                       Drag issues here

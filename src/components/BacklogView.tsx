@@ -564,7 +564,7 @@ function SprintContainer({
                   <span>{getPriorityIcon(issue.priority)}</span>
 
                   {/* Story point badge */}
-                  <span className="w-5 h-5 rounded-full bg-slate-900/5 border border-slate-900/10 text-slate-500 flex items-center justify-center font-bold text-[10px]">
+                  <span className="hidden md:flex w-5 h-5 rounded-full bg-slate-900/5 border border-slate-900/10 text-slate-500 items-center justify-center font-bold text-[10px]">
                     {issue.storyPoints || "-"}
                   </span>
 
@@ -572,20 +572,20 @@ function SprintContainer({
                   <img
                     src={issue.assignee.avatar}
                     alt={issue.assignee.name}
-                    className="w-5.5 h-5.5 rounded-full ring-1 ring-white/30 object-cover"
+                    className="hidden md:block w-5.5 h-5.5 rounded-full ring-1 ring-white/30 object-cover"
                     title={`Assigned to ${issue.assignee.name}`}
                     referrerPolicy="no-referrer"
                   />
 
                   {/* Move Sprint destination selector */}
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <div className="hidden md:block relative" onClick={(e) => e.stopPropagation()}>
                     <select
                       value={sprintId || "backlog"}
                       onChange={(e) => {
                         const target = e.target.value === "backlog" ? null : e.target.value;
                         onMoveIssue(issue.id, target);
                       }}
-                      className="px-2 py-0.5 text-[10px] font-bold bg-slate-900/5 border border-slate-900/10 rounded-lg text-slate-500 cursor-pointer hover:border-blue-500 transition-all focus:outline-hidden"
+                      className="px-2 py-0.5 text-[10px] font-bold bg-slate-900/5 border border-slate-900/10 rounded-lg text-slate-500 cursor-pointer hover:border-blue-500 transition-all focus:outline-none"
                     >
                       <option value="backlog">Backlog</option>
                       {allSprints

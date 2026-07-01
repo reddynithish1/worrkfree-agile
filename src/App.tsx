@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Folder, Calendar, Sparkles, BarChart2, CheckSquare, Plus, ChevronDown, 
-  Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X, MessageSquare, Layout
+  Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X, MessageSquare, Layout, Menu
 } from "lucide-react";
 
 // Modular imports
@@ -32,14 +32,7 @@ export default function App() {
   // Profile Settings State
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // New Project Modal State
-  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
-  const [newProjName, setNewProjName] = useState("");
-  const [newProjKey, setNewProjKey] = useState("");
-  const [newProjDesc, setNewProjDesc] = useState("");
-
   // Join Project Modal State
-  const [isJoinProjectOpen, setIsJoinProjectOpen] = useState(false);
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [joinError, setJoinError] = useState("");
   const [isJoining, setIsJoining] = useState(false);
@@ -371,13 +364,13 @@ export default function App() {
 
         {/* New Project Modal Container inside Empty State */}
         {isNewProjectOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
+          <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div className="glass-panel md:rounded-3xl shadow-2xl border-0 md:border border-slate-900/10 w-full h-full md:h-auto md:max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10 shrink-0">
                 <h3 className="font-bold text-slate-800">Create New Project</h3>
                 <button onClick={() => setIsNewProjectOpen(false)} className="p-1 hover:bg-slate-900/5 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
               </div>
-              <form onSubmit={handleCreateProjectSubmit} className="p-6 space-y-5">
+              <form onSubmit={handleCreateProjectSubmit} className="p-6 flex-1 overflow-y-auto space-y-5">
                 <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Project Name *</label><input required type="text" value={newProjName} onChange={(e) => setNewProjName(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl" placeholder="e.g. Website Redesign" /></div>
                 <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Project Key *</label><input required type="text" value={newProjKey} onChange={(e) => setNewProjKey(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl" placeholder="e.g. WEB" maxLength={10} /></div>
                 <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label><textarea value={newProjDesc} onChange={(e) => setNewProjDesc(e.target.value)} className="w-full px-3.5 py-2 text-sm glass-input rounded-xl h-24 resize-none" placeholder="Optional brief description..." /></div>
@@ -389,13 +382,13 @@ export default function App() {
 
         {/* Join Project Modal */}
         {isJoinProjectOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
+          <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div className="glass-panel md:rounded-3xl shadow-2xl border-0 md:border border-slate-900/10 w-full h-full md:h-auto md:max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10 shrink-0">
                 <h3 className="font-bold text-slate-800">Join Project</h3>
                 <button onClick={() => setIsJoinProjectOpen(false)} className="p-1 hover:bg-slate-900/5 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
               </div>
-              <form onSubmit={handleJoinProjectSubmit} className="p-6 space-y-5">
+              <form onSubmit={handleJoinProjectSubmit} className="p-6 flex-1 overflow-y-auto space-y-5">
                 {joinError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl">{joinError}</div>}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Invite Code</label>
@@ -421,18 +414,50 @@ export default function App() {
 
       <div className="flex h-screen w-screen overflow-hidden bg-transparent text-slate-800 font-sans relative z-10" id="main-app">
         
+        {/* Mobile Top Navbar */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-slate-200 z-40 fixed top-0 w-full">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-slate-100">
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="font-bold text-lg text-slate-800 flex items-center gap-2">
+            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs">
+              {currentProject ? currentProject.key.substring(0, 1) : "W"}
+            </div>
+            WorrkFree
+          </div>
+          <button onClick={() => setIsProfileOpen(true)}>
+             <img src={currentUser.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"} className="w-8 h-8 rounded-full border border-slate-200" alt="profile" />
+          </button>
+        </div>
+
+        {/* Sidebar Overlay for Mobile */}
+        {isSidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
+        )}
+
         {/* LEFT NAVIGATION COLUMN (SIDEBAR) */}
-        <div className="w-64 glass-sidebar text-slate-800 flex flex-col justify-between shrink-0 p-5 space-y-6 relative z-10">
+        <div className={`
+          fixed md:relative z-50 md:z-10 h-full w-64 glass-sidebar text-slate-800 flex flex-col justify-between shrink-0 p-5 space-y-6 transition-transform duration-300
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
           
           <div className="space-y-6">
-            {/* Logo segment */}
-            <div className="flex items-center space-x-3 mb-2 px-1">
+            {/* Logo segment - Hidden on Mobile, Visible on Desktop */}
+            <div className="hidden md:flex items-center space-x-3 mb-2 px-1">
               <div className="w-8 h-8 bg-blue-600/90 rounded-lg flex items-center justify-center text-slate-900 font-bold shadow-md shadow-blue-500/25">
                 {currentProject ? currentProject.key.substring(0, 1) : "W"}
               </div>
               <span className="font-bold text-base tracking-tight text-slate-800">
                 WorrkFree
               </span>
+            </div>
+
+            {/* Mobile Sidebar Header with Close Button */}
+            <div className="flex md:hidden items-center justify-between px-1 mb-2">
+              <span className="font-bold text-base tracking-tight text-slate-800">Menu</span>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-1 rounded-full hover:bg-slate-200">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
             </div>
 
             {/* Project Selector Segment */}
@@ -569,9 +594,9 @@ export default function App() {
             </div>
           </div>
 
-          {/* Footer info segment */}
+          {/* Footer info segment - Hidden on Mobile (Navbar handles it) */}
           <div 
-            className="flex items-center space-x-3 p-3 bg-slate-900/5 rounded-2xl border border-slate-900/10 backdrop-blur-md shadow-xs hover:bg-white/10 transition-colors"
+            className="hidden md:flex items-center space-x-3 p-3 bg-slate-900/5 rounded-2xl border border-slate-900/10 backdrop-blur-md shadow-xs hover:bg-white/10 transition-colors"
           >
             <img
               src={currentUser.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
@@ -580,9 +605,9 @@ export default function App() {
               referrerPolicy="no-referrer"
               onClick={() => setIsProfileOpen(true)}
             />
-            <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setIsProfileOpen(true)}>
-              <div className="text-xs font-bold text-slate-800 truncate">{currentUser.displayName}</div>
-              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">{currentUser.email}</div>
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setIsProfileOpen(true)}>
+              <span className="block text-xs font-bold text-slate-800 truncate">{currentUser.displayName}</span>
+              <span className="block text-[10px] text-slate-500 truncate">{currentUser.email}</span>
             </div>
             <button
               onClick={async (e) => {
@@ -605,8 +630,8 @@ export default function App() {
 
         </div>
 
-        {/* RIGHT SIDE MAIN WORKSPACE WRAPPER */}
-        <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+        {/* MAIN CONTENT AREA */}
+        <div className="flex-1 overflow-hidden bg-transparent relative z-10 flex flex-col pt-16 md:pt-0 w-full">
           
           {/* Render Active Tab Component */}
           {currentProject ? (
@@ -806,13 +831,13 @@ export default function App() {
 
         {/* Join Project Modal (Global) */}
         {isJoinProjectOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10">
+          <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div className="glass-panel md:rounded-3xl shadow-2xl border-0 md:border border-slate-900/10 w-full h-full md:h-auto md:max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10 shrink-0">
                 <h3 className="font-bold text-slate-800">Join Project</h3>
                 <button onClick={() => setIsJoinProjectOpen(false)} className="p-1 hover:bg-slate-900/5 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
               </div>
-              <form onSubmit={handleJoinProjectSubmit} className="p-6 space-y-5">
+              <form onSubmit={handleJoinProjectSubmit} className="p-6 flex-1 overflow-y-auto space-y-5">
                 {joinError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl">{joinError}</div>}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Invite Code</label>

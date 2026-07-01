@@ -114,8 +114,8 @@ export default function ProjectSettingsModal({
   if (!isOpen || !project) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-      <div className="glass-panel rounded-3xl shadow-2xl border border-slate-900/10 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="glass-panel md:rounded-3xl shadow-2xl border-0 md:border border-slate-900/10 w-full h-full md:h-auto md:max-h-[85vh] max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-900/5 border-b border-slate-900/10 shrink-0">

@@ -95,7 +95,7 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-96 glass-sidebar flex flex-col z-50 shadow-2xl border-l border-slate-200">
+    <div className="fixed inset-0 md:inset-auto md:right-0 md:top-0 h-screen w-full md:w-96 glass-sidebar flex flex-col z-50 shadow-2xl md:border-l border-slate-200">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50">
         <div className="flex items-center gap-2">
