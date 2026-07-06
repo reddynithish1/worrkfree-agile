@@ -4,20 +4,22 @@ import { Send, X, MessageSquare, User } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
+  projectId: string;
   userId: string;
   userName: string;
   userAvatar?: string;
-  text: string;
+  message: string;
   timestamp: string;
 }
 
 interface ChatPanelProps {
   user: { id: string; name: string; avatar?: string };
+  projectId: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
+export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -26,18 +28,26 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Only connect if the panel is ever rendered/mounted
+    if (!isOpen || !projectId) return;
+
+    // Fetch initial chat history from the backend
+    fetch(`/api/projects/${projectId}/chat`)
+      .then(res => res.json())
+      .then(data => {
+        setMessages(data || []);
+        scrollToBottom();
+      })
+      .catch(err => console.error("Error fetching chat history", err));
+
     const newSocket = io();
     setSocket(newSocket);
 
-    newSocket.on('chat_history', (history: ChatMessage[]) => {
-      setMessages(history);
-      scrollToBottom();
-    });
-
     newSocket.on('new_message', (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg]);
-      scrollToBottom();
+      // Only process messages for the current project
+      if (msg.projectId === projectId) {
+        setMessages((prev) => [...prev, msg]);
+        scrollToBottom();
+      }
     });
 
     newSocket.on('user_typing', (userName: string) => {
@@ -49,7 +59,6 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
         return next;
       });
 
-      // Clear the typing indicator for this user after 3 seconds
       setTimeout(() => {
         setTypingUsers((prev) => {
           const next = new Set(prev);
@@ -62,7 +71,7 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
     return () => {
       newSocket.disconnect();
     };
-  }, [user.name]);
+  }, [user.name, isOpen, projectId]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -72,13 +81,14 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !socket) return;
+    if (!inputText.trim() || !socket || !projectId) return;
 
     socket.emit('send_message', {
+      projectId: projectId,
       userId: user.id,
       userName: user.name,
       userAvatar: user.avatar,
-      text: inputText.trim()
+      message: inputText.trim()
     });
 
     setInputText('');
@@ -138,7 +148,7 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
 
                   {/* Message Bubble */}
                   <div className={`px-4 py-2 rounded-2xl text-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white text-slate-900 rounded-tl-sm border border-slate-200 shadow-sm'}`}>
-                    {msg.text}
+                    {msg.message}
                   </div>
                 </div>
               </div>

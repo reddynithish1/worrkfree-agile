@@ -58,27 +58,129 @@ const ProjectSchema = new Schema<IProject>({
 
 export const ProjectModel = (mongoose.models.Project as mongoose.Model<IProject>) || mongoose.model<IProject>('Project', ProjectSchema);
 
-// Task/Issue Schema
-export interface IIssue extends Document {
+// Sprint Schema
+export interface ISprint extends Document {
   id: string;
   projectId: string;
-  title: string;
-  description: string;
+  name: string;
+  goal: string;
+  startDate?: string;
+  endDate?: string;
   status: string;
-  priority: string;
-  assigneeId: string;
+}
+
+const SprintSchema = new Schema<ISprint>({
+  id: { type: String, required: true, unique: true },
+  projectId: { type: String, required: true },
+  name: { type: String, required: true },
+  goal: { type: String, default: "" },
+  startDate: { type: String },
+  endDate: { type: String },
+  status: { type: String, default: "future" }
+});
+
+export const SprintModel = (mongoose.models.Sprint as mongoose.Model<ISprint>) || mongoose.model<ISprint>('Sprint', SprintSchema);
+
+// WorkLog Schema
+export interface IWorkLog extends Document {
+  id: string;
+  issueId: string;
+  userId: string;
+  userName: string;
+  hours: number;
+  comment: string;
   createdAt: string;
 }
 
+const WorkLogSchema = new Schema<IWorkLog>({
+  id: { type: String, required: true, unique: true },
+  issueId: { type: String, required: true },
+  userId: { type: String, required: true },
+  userName: { type: String, required: true },
+  hours: { type: Number, required: true },
+  comment: { type: String, default: "" },
+  createdAt: { type: String, required: true }
+});
+
+export const WorkLogModel = (mongoose.models.WorkLog as mongoose.Model<IWorkLog>) || mongoose.model<IWorkLog>('WorkLog', WorkLogSchema);
+
+// Task/Issue Schema
+export interface IAssignee {
+  name: string;
+  avatar: string;
+  email: string;
+}
+
+export interface IComment {
+  id: string;
+  author: string;
+  avatar: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface ISubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: string;
+}
+
+export interface IIssue extends Document {
+  id: string;
+  key: string;
+  projectId: string;
+  sprintId: string | null;
+  summary: string;
+  description: string;
+  type: string;
+  status: string;
+  priority: string;
+  storyPoints: number;
+  assignee: IAssignee;
+  comments: IComment[];
+  subtasks: ISubTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+const AssigneeSchema = new Schema<IAssignee>({
+  name: { type: String, required: true },
+  avatar: { type: String, required: true },
+  email: { type: String, required: true }
+}, { _id: false });
+
+const CommentSchema = new Schema<IComment>({
+  id: { type: String, required: true },
+  author: { type: String, required: true },
+  avatar: { type: String, required: true },
+  text: { type: String, required: true },
+  createdAt: { type: String, required: true }
+}, { _id: false });
+
+const SubTaskSchema = new Schema<ISubTask>({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  completed: { type: Boolean, default: false },
+  createdAt: { type: String, required: true }
+}, { _id: false });
+
 const IssueSchema = new Schema<IIssue>({
   id: { type: String, required: true, unique: true },
+  key: { type: String, required: true },
   projectId: { type: String, required: true },
-  title: { type: String, required: true },
+  sprintId: { type: String, default: null },
+  summary: { type: String, required: true },
   description: { type: String, default: "" },
+  type: { type: String, default: "Story" },
   status: { type: String, default: "To Do" },
   priority: { type: String, default: "Medium" },
-  assigneeId: { type: String, default: "" },
-  createdAt: { type: String, default: () => new Date().toISOString() }
+  storyPoints: { type: Number, default: 0 },
+  assignee: { type: AssigneeSchema, required: true },
+  comments: { type: [CommentSchema], default: [] },
+  subtasks: { type: [SubTaskSchema], default: [] },
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: { type: String, default: () => new Date().toISOString() }
 });
 
 export const IssueModel = (mongoose.models.Issue as mongoose.Model<IIssue>) || mongoose.model<IIssue>('Issue', IssueSchema);
@@ -86,21 +188,21 @@ export const IssueModel = (mongoose.models.Issue as mongoose.Model<IIssue>) || m
 // ChatMessage Schema
 export interface IChatMessage extends Document {
   id: string;
-  projectId?: string;
+  projectId: string;
   userId: string;
   userName: string;
   userAvatar?: string;
-  text: string;
+  message: string;
   timestamp: string;
 }
 
 const ChatMessageSchema = new Schema<IChatMessage>({
   id: { type: String, required: true, unique: true },
-  projectId: { type: String },
+  projectId: { type: String, required: true },
   userId: { type: String, required: true },
   userName: { type: String, required: true },
   userAvatar: { type: String },
-  text: { type: String, required: true },
+  message: { type: String, required: true },
   timestamp: { type: String, required: true }
 });
 

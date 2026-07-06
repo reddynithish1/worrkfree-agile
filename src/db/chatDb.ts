@@ -2,27 +2,29 @@ import { ChatMessageModel } from "./models";
 
 export interface ChatMessage {
   id: string;
+  projectId: string;
   userId: string;
   userName: string;
   userAvatar?: string;
-  text: string;
+  message: string;
   timestamp: string;
 }
 
-export async function getMessages(): Promise<ChatMessage[]> {
+export async function getMessages(projectId: string): Promise<ChatMessage[]> {
   try {
-    // Fetch last 1000 messages and sort by timestamp
-    const messages = await ChatMessageModel.find()
+    // Fetch last 50 messages and sort by timestamp
+    const messages = await ChatMessageModel.find({ projectId })
       .sort({ timestamp: 1 })
-      .limit(1000)
+      .limit(50)
       .lean();
       
     return messages.map((m: any) => ({
       id: m.id,
+      projectId: m.projectId,
       userId: m.userId,
       userName: m.userName,
       userAvatar: m.userAvatar,
-      text: m.text,
+      message: m.message,
       timestamp: m.timestamp
     }));
   } catch (error) {
@@ -31,15 +33,16 @@ export async function getMessages(): Promise<ChatMessage[]> {
   }
 }
 
-export async function saveMessage(message: ChatMessage): Promise<void> {
+export async function saveMessage(msg: ChatMessage): Promise<void> {
   try {
     await ChatMessageModel.create({
-      id: message.id,
-      userId: message.userId,
-      userName: message.userName,
-      userAvatar: message.userAvatar,
-      text: message.text,
-      timestamp: message.timestamp
+      id: msg.id,
+      projectId: msg.projectId,
+      userId: msg.userId,
+      userName: msg.userName,
+      userAvatar: msg.userAvatar,
+      message: msg.message,
+      timestamp: msg.timestamp
     });
   } catch (error) {
     console.error("Error saving message to DB:", error);

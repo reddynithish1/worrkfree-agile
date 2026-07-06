@@ -33,10 +33,12 @@ export default function IssueDetailDrawer({
   const [newComment, setNewComment] = useState("");
   const [newSubtask, setNewSubtask] = useState("");
 
-  // Work Log inline state
-  const [isLoggingWork, setIsLoggingWork] = useState(false);
+  // Work Log Modal state
+  const [isLogHoursModalOpen, setIsLogHoursModalOpen] = useState(false);
   const [logHours, setLogHours] = useState("");
   const [logDesc, setLogDesc] = useState("");
+  const [logDate, setLogDate] = useState(new Date().toISOString().split("T")[0]);
+  const [workLogs, setWorkLogs] = useState<any[]>([]);
 
   // AI Loading & Result states
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
@@ -44,12 +46,20 @@ export default function IssueDetailDrawer({
 
   // Sync state with issue when issue changes
   useEffect(() => {
+    if (!issue) return;
     setSummary(issue.summary);
     setDescription(issue.description);
     setIsEditingDesc(false);
     setAiEstimationResult(null);
-    setIsLoggingWork(false);
-  }, [issue.id]);
+    setIsLogHoursModalOpen(false);
+
+    // Fetch work logs for the issue
+    fetch(`/api/issues/${issue.id}/worklogs`)
+      .then(res => res.json())
+      .then(data => setWorkLogs(data || []))
+      .catch(err => console.error("Error fetching worklogs", err));
+
+  }, [issue?.id]);
 
   // Handle auto-saves for text field modifications
   const handleSummaryBlur = () => {
@@ -115,23 +125,35 @@ export default function IssueDetailDrawer({
   };
 
   // 3. LOG WORK HOURS
-  const handleLogWorkSubmit = (e: React.FormEvent) => {
+  const handleLogWorkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const hours = parseFloat(logHours);
     if (isNaN(hours) || hours <= 0) return;
 
-    const log: WorkLog = {
-      id: "worklog-" + Date.now(),
-      author: "Nithish Reddy",
-      hoursLogged: hours,
-      description: logDesc || "Worked on sprint tasks",
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const res = await fetch(`/api/issues/${issue.id}/worklogs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: "current-user", // We could grab this from a context, but we will use Nithish Reddy as default
+          userName: "Nithish Reddy", 
+          hours,
+          comment: logDesc || "Worked on sprint tasks"
+          // We can't override createdAt directly in our API right now, it sets it to current date.
+        })
+      });
 
-    updateAttribute("workLogs", [log, ...issue.workLogs]);
-    setLogHours("");
-    setLogDesc("");
-    setIsLoggingWork(false);
+      if (res.ok) {
+        const newLog = await res.json();
+        setWorkLogs([newLog, ...workLogs]);
+        setLogHours("");
+        setLogDesc("");
+        setLogDate(new Date().toISOString().split("T")[0]);
+        setIsLogHoursModalOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // 4. AI INTEGRATION APIS
@@ -216,10 +238,11 @@ export default function IssueDetailDrawer({
   };
 
   // Helper formatting total worklog hours
-  const totalHoursSpent = issue.workLogs.reduce((sum, w) => sum + w.hoursLogged, 0);
+  const totalHoursSpent = workLogs.reduce((sum, w) => sum + w.hours, 0);
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-4xl bg-slate-900/5 backdrop-blur-2xl shadow-2xl border-l border-slate-900/10 flex flex-col animate-in slide-in-from-right duration-250">
+    <>
+      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-4xl bg-slate-900/5 backdrop-blur-2xl shadow-2xl border-l border-slate-900/10 flex flex-col animate-in slide-in-from-right duration-250">
       
       {/* Drawer Title & Actions Bar */}
       <div className="px-6 py-4.5 border-b border-slate-900/10 bg-slate-900/5 text-slate-800 flex items-center justify-between">
@@ -618,72 +641,42 @@ export default function IssueDetailDrawer({
 
           {/* Work Log & Progress */}
           <div className="border-t border-slate-900/10 pt-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-4">
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Logged Work Time
               </label>
               <span className="text-xs font-bold text-blue-600 bg-blue-600/10 border border-blue-600/20 rounded-full px-2 py-0.5 shadow-2xs">{totalHoursSpent} hours</span>
             </div>
 
-            {/* inline logging trigger */}
-            {!isLoggingWork ? (
-              <button
-                onClick={() => setIsLoggingWork(true)}
-                className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-bold transition-colors cursor-pointer"
-              >
-                <Clock className="w-3.5 h-3.5" /> Log hours...
-              </button>
-            ) : (
-              <form onSubmit={handleLogWorkSubmit} className="space-y-2.5 p-3.5 bg-slate-900/5 border border-slate-900/10 rounded-2xl shadow-2xs">
-                <div>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    required
-                    placeholder="Log hours (e.g., 2.5)"
-                    value={logHours}
-                    onChange={(e) => setLogHours(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Brief description..."
-                    value={logDesc}
-                    onChange={(e) => setLogDesc(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800"
-                  />
-                </div>
-                <div className="flex gap-2 justify-end items-center">
-                  <button
-                    type="button"
-                    onClick={() => setIsLoggingWork(false)}
-                    className="text-[10px] font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-3.5 py-1.5 glass-button-primary text-slate-900 font-bold text-[10px] rounded-full shadow-xs"
-                  >
-                    Log Work
-                  </button>
-                </div>
-              </form>
-            )}
+            <button
+              onClick={() => setIsLogHoursModalOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 glass-button-primary font-bold text-xs rounded-full shadow-xs transition-colors mb-4"
+            >
+              <Clock className="w-4 h-4" /> Log Hours
+            </button>
 
             {/* History of work logs */}
-            {issue.workLogs.length > 0 && (
-              <div className="mt-3.5 max-h-[140px] overflow-y-auto space-y-2 divide-y divide-white/20 scrollbar-thin">
-                {issue.workLogs.map((wl) => (
-                  <div key={wl.id} className="text-[10px] text-slate-500 pt-2.5 first:pt-0">
-                    <div className="flex items-center justify-between font-semibold mb-1">
-                      <span className="text-slate-800 font-bold">{wl.author}</span>
-                      <span className="text-blue-600 bg-blue-600/10 border border-blue-600/20 px-2 py-0.5 rounded-full font-bold">{wl.hoursLogged}h</span>
+            {workLogs.length > 0 && (
+              <div className="mt-2 max-h-[250px] overflow-y-auto space-y-3 scrollbar-thin">
+                {workLogs.map((wl) => (
+                  <div key={wl.id} className="p-3 bg-white/60 border border-slate-900/10 rounded-xl shadow-xs transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px]">
+                          {wl.userName.split(" ").map((n: string) => n[0]).join("")}
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">{wl.userName}</span>
+                      </div>
+                      <span className="text-xs font-black text-blue-600">{wl.hours}h</span>
                     </div>
-                    <p className="italic text-slate-500 font-semibold truncate mt-0.5">"{wl.description}"</p>
+                    {wl.comment && (
+                      <p className="text-xs text-slate-600 font-medium mb-1">
+                        {wl.comment}
+                      </p>
+                    )}
+                    <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                      {new Date(wl.createdAt).toLocaleDateString()}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -701,5 +694,78 @@ export default function IssueDetailDrawer({
       </div>
 
     </div>
+
+      {/* Log Hours Modal */}
+      {isLogHoursModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50 text-slate-800">
+              <h3 className="font-bold flex items-center gap-2">
+                <Clock className="w-4 h-4 text-blue-600" /> Log Time Spent
+              </h3>
+              <button 
+                onClick={() => setIsLogHoursModalOpen(false)}
+                className="p-1 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleLogWorkSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
+                <input 
+                  type="date"
+                  value={logDate}
+                  onChange={(e) => setLogDate(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hours</label>
+                <input 
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  required
+                  placeholder="e.g. 2.5"
+                  value={logHours}
+                  onChange={(e) => setLogHours(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Comment</label>
+                <input 
+                  type="text"
+                  placeholder="What did you work on?"
+                  value={logDesc}
+                  onChange={(e) => setLogDesc(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3 border-t border-slate-100 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsLogHoursModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-sm font-bold glass-button-primary rounded-full shadow-md"
+                >
+                  Save Log
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

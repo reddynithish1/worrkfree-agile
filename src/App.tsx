@@ -16,6 +16,7 @@ import AuthView from "./components/AuthView";
 import ChatPanel from "./components/ChatPanel";
 import ProfileSettings from "./components/ProfileSettings";
 import ProjectSettingsModal from "./components/ProjectSettingsModal";
+import WorrkFreeLogo from "./components/WorrkFreeLogo";
 
 export default function App() {
   // Global Workspace States
@@ -88,23 +89,8 @@ export default function App() {
       })
       .then(fetchedProjects => {
         setProjects(fetchedProjects);
-        if (fetchedProjects.length > 0) {
+        if (fetchedProjects.length > 0 && !activeProjectId) {
           setActiveProjectId(fetchedProjects[0].id);
-        }
-
-        // Load Sprints and Issues from strictly scoped local storage
-        const sprintsKey = `jira_sprints_${currentUser.id}`;
-        const issuesKey = `jira_issues_${currentUser.id}`;
-        
-        const cachedSprints = localStorage.getItem(sprintsKey);
-        const cachedIssues = localStorage.getItem(issuesKey);
-
-        if (cachedSprints && cachedIssues) {
-          setSprints(JSON.parse(cachedSprints));
-          setIssues(JSON.parse(cachedIssues));
-        } else {
-          setSprints([]);
-          setIssues([]);
         }
       })
       .catch(e => console.error("Error loading user data", e))
@@ -113,15 +99,34 @@ export default function App() {
       });
   }, [currentUser]);
 
-  // Save changes to scoped localStorage
-  useEffect(() => {
-    if (isInitialized && currentUser) {
-      const sprintsKey = `jira_sprints_${currentUser.id}`;
-      const issuesKey = `jira_issues_${currentUser.id}`;
-      localStorage.setItem(sprintsKey, JSON.stringify(sprints));
-      localStorage.setItem(issuesKey, JSON.stringify(issues));
+  // Fetch Sprints and Issues for active project
+  const fetchSprintsAndIssues = async (projectId: string) => {
+    try {
+      const [sprintsRes, issuesRes] = await Promise.all([
+        fetch(`/api/projects/${projectId}/sprints`),
+        fetch(`/api/projects/${projectId}/issues`)
+      ]);
+      if (sprintsRes.ok) {
+        setSprints(await sprintsRes.json());
+      }
+      if (issuesRes.ok) {
+        setIssues(await issuesRes.json());
+      }
+    } catch (e) {
+      console.error("Error fetching project data", e);
     }
-  }, [sprints, issues, isInitialized, currentUser]);
+  };
+
+  useEffect(() => {
+    if (activeProjectId) {
+      fetchSprintsAndIssues(activeProjectId);
+    } else {
+      setSprints([]);
+      setIssues([]);
+    }
+  }, [activeProjectId]);
+
+  // LocalStorage saving removed
 
   // Current selected project details
   const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || null;
@@ -137,112 +142,129 @@ export default function App() {
   // 2. STATE RE-ASSIGNMENT HANDLERS
   
   // Update direct status (Kanban Board Drag & Drop)
-  const handleUpdateIssueStatus = (issueId: string, newStatus: IssueStatus) => {
-    setIssues((prev) =>
-      prev.map((i) =>
-        i.id === issueId
-          ? { ...i, status: newStatus, updatedAt: new Date().toISOString() }
-          : i
-      )
-    );
+  const handleUpdateIssueStatus = async (issueId: string, newStatus: IssueStatus) => {
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Move issue to a different Sprint (or Product Backlog)
-  const handleMoveIssueToSprint = (issueId: string, sprintId: string | null) => {
-    setIssues((prev) =>
-      prev.map((i) =>
-        i.id === issueId
-          ? { ...i, sprintId, updatedAt: new Date().toISOString() }
-          : i
-      )
-    );
+  const handleMoveIssueToSprint = async (issueId: string, sprintId: string | null) => {
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sprintId })
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // Create an issue (calculates incremental project key key, e.g. QTUM-6)
-  const handleCreateIssue = (issueData: Partial<Issue>) => {
+  // Create an issue
+  const handleCreateIssue = async (issueData: Partial<Issue>) => {
     const projId = issueData.projectId || activeProjectId;
-    const proj = projects.find((p) => p.id === projId);
-    if (!proj) return;
+    if (!projId) return;
 
-    // Filter project issues to calculate next sequential ID count
-    const projIssues = issues.filter((i) => i.projectId === projId);
-    const keys = projIssues.map((i) => {
-      const parts = i.key.split("-");
-      return parts.length > 1 ? parseInt(parts[1], 10) : 0;
-    });
-    const nextNum = keys.length > 0 ? Math.max(...keys) + 1 : 1;
-    const computedKey = `${proj.key}-${nextNum}`;
-
-    const newIssue: Issue = {
-      id: "issue-" + Date.now(),
-      key: computedKey,
-      projectId: projId,
-      sprintId: issueData.sprintId ?? null,
-      summary: issueData.summary || "New Issue Title",
-      description: issueData.description || "",
-      type: issueData.type || "Story",
-      status: issueData.status || "To Do",
-      priority: issueData.priority || "Medium",
-      storyPoints: issueData.storyPoints || 0,
-      assignee: issueData.assignee || SEED_USERS[3], // Default Nithish Dev
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      comments: issueData.comments || [],
-      subtasks: issueData.subtasks || [],
-      workLogs: issueData.workLogs || [],
-    };
-
-    setIssues((prev) => [...prev, newIssue]);
+    try {
+      const res = await fetch(`/api/projects/${projId}/issues`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(issueData)
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Add subtasks, comments, log-work update
-  const handleUpdateIssue = (updated: Issue) => {
-    setIssues((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  const handleUpdateIssue = async (updated: Issue) => {
+    try {
+      const res = await fetch(`/api/issues/${updated.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated)
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleDeleteIssue = (id: string) => {
-    setIssues((prev) => prev.filter((i) => i.id !== id));
-    if (selectedIssueId === id) setSelectedIssueId(null);
+  const handleDeleteIssue = async (id: string) => {
+    try {
+      const res = await fetch(`/api/issues/${id}`, { method: "DELETE" });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+        if (selectedIssueId === id) setSelectedIssueId(null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Create sprint planned
-  const handleCreateSprint = (sprintData: Partial<Sprint>) => {
-    const newSprint: Sprint = {
-      id: "sprint-" + Date.now(),
-      projectId: sprintData.projectId || activeProjectId,
-      name: sprintData.name || "Planned Sprint",
-      goal: sprintData.goal || "",
-      startDate: sprintData.startDate,
-      endDate: sprintData.endDate,
-      status: "future",
-    };
-
-    setSprints((prev) => [...prev, newSprint]);
+  const handleCreateSprint = async (sprintData: Partial<Sprint>) => {
+    const projId = sprintData.projectId || activeProjectId;
+    try {
+      const res = await fetch(`/api/projects/${projId}/sprints`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sprintData)
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Start a planned sprint (mark active)
-  const handleStartSprint = (sprintId: string) => {
-    setSprints((prev) =>
-      prev.map((s) => (s.id === sprintId ? { ...s, status: "active" } : s))
-    );
+  const handleStartSprint = async (sprintId: string) => {
+    try {
+      const res = await fetch(`/api/sprints/${sprintId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "active" })
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // Complete an active sprint:
-  // Moves ALL un-resolved issues (To Do, In Progress, In Review) back to the Product Backlog (sprintId = null)
-  // Keeps resolved (Done) issues locked inside the sprint. Marks sprint as "completed"
-  const handleCompleteSprint = (sprintId: string) => {
-    setIssues((prev) =>
-      prev.map((i) => {
-        if (i.sprintId === sprintId && i.status !== "Done") {
-          return { ...i, sprintId: null, updatedAt: new Date().toISOString() };
-        }
-        return i;
-      })
-    );
-
-    setSprints((prev) =>
-      prev.map((s) => (s.id === sprintId ? { ...s, status: "completed" } : s))
-    );
+  // Complete an active sprint
+  const handleCompleteSprint = async (sprintId: string) => {
+    try {
+      const res = await fetch(`/api/sprints/${sprintId}/complete`, {
+        method: "POST"
+      });
+      if (res.ok && activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // AI Sprint generator bulk imports
@@ -273,15 +295,17 @@ export default function App() {
       setProjects((prev) => [...prev, data]);
       setActiveProjectId(data.id);
       
-      // Create an initial backlog sprint for this new project locally
-      const defaultSprint: Sprint = {
-        id: "sprint-auto-" + Date.now(),
-        projectId: data.id,
-        name: `${data.key} Sprint 1`,
-        goal: "Bootstrapping initial iteration scope",
-        status: "future"
-      };
-      setSprints((prev) => [...prev, defaultSprint]);
+      // Create an initial backlog sprint for this new project
+      await fetch(`/api/projects/${data.id}/sprints`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${data.key} Sprint 1`,
+          goal: "Bootstrapping initial iteration scope",
+          status: "future"
+        })
+      });
+      // Will be fetched automatically by the activeProjectId effect
 
       setNewProjName("");
       setNewProjKey("");
@@ -430,9 +454,7 @@ export default function App() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="font-bold text-lg text-slate-800 flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-xs">
-              {currentProject ? currentProject.key.substring(0, 1) : "W"}
-            </div>
+            <WorrkFreeLogo />
             WorrkFree
           </div>
           <button onClick={() => setIsProfileOpen(true)}>
@@ -454,9 +476,7 @@ export default function App() {
           <div className="space-y-6">
             {/* Logo segment - Hidden on Mobile, Visible on Desktop */}
             <div className="hidden md:flex items-center space-x-3 mb-2 px-1">
-              <div className="w-8 h-8 bg-blue-600/90 rounded-lg flex items-center justify-center text-slate-900 font-bold shadow-md shadow-blue-500/25">
-                {currentProject ? currentProject.key.substring(0, 1) : "W"}
-              </div>
+              <WorrkFreeLogo />
               <span className="font-bold text-base tracking-tight text-slate-800">
                 WorrkFree
               </span>
@@ -817,6 +837,7 @@ export default function App() {
         {/* Global Chat Panel */}
         <ChatPanel 
           user={currentUser} 
+          projectId={activeProjectId}
           isOpen={isChatOpen} 
           onClose={() => setIsChatOpen(false)} 
         />

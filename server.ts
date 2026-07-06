@@ -15,6 +15,7 @@ import {
 } from "./src/db/projectDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
 import { connectDB } from "./src/db/mongoose";
+import { SprintModel, IssueModel, WorkLogModel } from "./src/db/models";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
@@ -32,18 +33,23 @@ const PORT = 3000;
 
 // Socket.io integration
 io.on("connection", async (socket) => {
-  // Send chat history when connected
-  socket.emit("chat_history", await getMessages());
+  // We don't send global chat history anymore, the client will fetch it per project.
 
   socket.on("send_message", async (data) => {
-    // data: { userId, userName, userAvatar, text }
-    const message = {
+    // data: { projectId, userId, userName, userAvatar, message }
+    const msg = {
       id: Date.now().toString() + Math.random().toString(36).substring(7),
-      ...data,
+      projectId: data.projectId,
+      userId: data.userId,
+      userName: data.userName,
+      userAvatar: data.userAvatar,
+      message: data.message,
       timestamp: new Date().toISOString()
     };
-    await saveMessage(message);
-    io.emit("new_message", message);
+    await saveMessage(msg);
+    // Ideally we should emit only to a project room, but broadcasting globally for now
+    // as per current architecture. Frontend can filter by projectId.
+    io.emit("new_message", msg);
   });
 
   socket.on("typing", (userName) => {
@@ -340,6 +346,197 @@ app.delete("/api/projects/:id", authenticateToken, async (req: any, res: any) =>
     res.json({ message: "Project deleted successfully" });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------- AGILE ENDPOINTS ---------- //
+
+// Get Sprints for a project
+app.get("/api/projects/:id/sprints", authenticateToken, async (req: any, res: any) => {
+  try {
+    const sprints = await SprintModel.find({ projectId: req.params.id }).lean();
+    res.json(sprints);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create Sprint
+app.post("/api/projects/:id/sprints", authenticateToken, async (req: any, res: any) => {
+  try {
+    const { name, goal, startDate, endDate, status } = req.body;
+    const sprint = await SprintModel.create({
+      id: "sprint-" + Date.now(),
+      projectId: req.params.id,
+      name,
+      goal,
+      startDate,
+      endDate,
+      status: status || "future"
+    });
+    res.json(sprint);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update Sprint
+app.patch("/api/sprints/:id", authenticateToken, async (req: any, res: any) => {
+  try {
+    const sprint = await SprintModel.findOneAndUpdate(
+      { id: req.params.id },
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(sprint);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Complete Sprint (Handles shifting and moving issues)
+app.post("/api/sprints/:id/complete", authenticateToken, async (req: any, res: any) => {
+  try {
+    const sprintId = req.params.id;
+    const sprint = await SprintModel.findOne({ id: sprintId });
+    if (!sprint) return res.status(404).json({ error: "Sprint not found" });
+
+    // Mark as completed
+    sprint.status = "completed";
+    await sprint.save();
+
+    // Move incomplete issues back to backlog
+    await IssueModel.updateMany(
+      { sprintId, status: { $ne: "Done" } },
+      { $set: { sprintId: null } }
+    );
+
+    // Activate next future sprint if exists
+    const nextSprint = await SprintModel.findOne({ 
+      projectId: sprint.projectId, 
+      status: "future" 
+    }).sort({ _id: 1 }); // Sort by creation order
+
+    if (nextSprint) {
+      nextSprint.status = "active";
+      await nextSprint.save();
+    }
+
+    res.json({ success: true, message: "Sprint completed" });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get Issues for a project
+app.get("/api/projects/:id/issues", authenticateToken, async (req: any, res: any) => {
+  try {
+    const issues = await IssueModel.find({ projectId: req.params.id }).lean();
+    res.json(issues);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create Issue
+app.post("/api/projects/:id/issues", authenticateToken, async (req: any, res: any) => {
+  try {
+    const projectId = req.params.id;
+    const { sprintId, summary, description, type, status, priority, storyPoints, assignee, key, subtasks } = req.body;
+    
+    let issueKey = key;
+    if (!issueKey) {
+      const proj = await getProjects().then(ps => ps.find(p => p.id === projectId));
+      if (proj) {
+         const count = await IssueModel.countDocuments({ projectId });
+         issueKey = `${proj.key}-${count + 1}`;
+      } else {
+         issueKey = `UNK-${Date.now()}`;
+      }
+    }
+
+    const issue = await IssueModel.create({
+      id: "issue-" + Date.now(),
+      key: issueKey,
+      projectId,
+      sprintId: sprintId || null,
+      summary,
+      description,
+      type,
+      status,
+      priority,
+      storyPoints,
+      assignee,
+      subtasks: subtasks || [],
+      comments: []
+    });
+    res.json(issue);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update Issue
+app.patch("/api/issues/:id", authenticateToken, async (req: any, res: any) => {
+  try {
+    req.body.updatedAt = new Date().toISOString();
+    const issue = await IssueModel.findOneAndUpdate(
+      { id: req.params.id },
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(issue);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete Issue
+app.delete("/api/issues/:id", authenticateToken, async (req: any, res: any) => {
+  try {
+    await IssueModel.deleteOne({ id: req.params.id });
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get WorkLogs for an issue
+app.get("/api/issues/:id/worklogs", authenticateToken, async (req: any, res: any) => {
+  try {
+    const worklogs = await WorkLogModel.find({ issueId: req.params.id }).sort({ createdAt: -1 }).lean();
+    res.json(worklogs);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create WorkLog
+app.post("/api/issues/:id/worklogs", authenticateToken, async (req: any, res: any) => {
+  try {
+    const { userId, userName, hours, comment } = req.body;
+    const worklog = await WorkLogModel.create({
+      id: "worklog-" + Date.now(),
+      issueId: req.params.id,
+      userId,
+      userName,
+      hours,
+      comment,
+      createdAt: new Date().toISOString()
+    });
+    res.json(worklog);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get Chat Messages for a project
+app.get("/api/projects/:id/chat", authenticateToken, async (req: any, res: any) => {
+  try {
+    const messages = await getMessages(req.params.id);
+    res.json(messages);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
