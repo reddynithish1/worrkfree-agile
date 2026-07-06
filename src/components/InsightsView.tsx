@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Issue, Project, Sprint, IssueType } from "../types";
 import { BarChart2, CheckCircle2, Clock, Users, ShieldAlert, Award, AlertCircle } from "lucide-react";
 
@@ -9,6 +9,17 @@ interface InsightsViewProps {
 }
 
 export default function InsightsView({ project, sprints, issues }: InsightsViewProps) {
+  const [allWorkLogs, setAllWorkLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (project?.id) {
+      fetch(`/api/projects/${project.id}/worklogs`)
+        .then(res => res.json())
+        .then(data => setAllWorkLogs(data || []))
+        .catch(err => console.error("Error fetching project worklogs", err));
+    }
+  }, [project?.id]);
+
   const projectIssues = issues.filter((i) => i.projectId === project.id);
   const projectSprints = sprints.filter((s) => s.projectId === project.id);
 
@@ -29,33 +40,8 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
   const tasks = projectIssues.filter((i) => i.type === "Task");
   const bugs = projectIssues.filter((i) => i.type === "Bug");
 
-  // Group all work logs across issues
-  interface ExtendedWorkLog {
-    id: string;
-    issueKey: string;
-    issueSummary: string;
-    author: string;
-    hoursLogged: number;
-    description: string;
-    createdAt: string;
-  }
-
-  const allWorkLogs: ExtendedWorkLog[] = [];
-  projectIssues.forEach((issue) => {
-    issue.workLogs.forEach((wl) => {
-      allWorkLogs.push({
-        ...wl,
-        issueKey: issue.key,
-        issueSummary: issue.summary
-      });
-    });
-  });
-
-  // Sort logs by newest first
-  allWorkLogs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
   // Aggregate stats
-  const totalHoursLogged = allWorkLogs.reduce((sum, l) => sum + l.hoursLogged, 0);
+  const totalHoursLogged = allWorkLogs.reduce((sum, l) => sum + (l.hoursLogged || l.hours || 0), 0);
 
   // Velocity Calculation per Sprint
   const velocityData = projectSprints.map((sprint) => {
@@ -395,15 +381,15 @@ export default function InsightsView({ project, sprints, issues }: InsightsViewP
                         {log.issueKey}
                       </td>
                       <td className="p-3.5 font-bold text-slate-800">
-                        {log.author}
+                        {log.userName || log.author || "Unknown"}
                       </td>
                       <td className="p-3.5">
                         <span className="px-2.5 py-0.5 bg-blue-600/10 border border-blue-600/20 text-blue-600 font-bold rounded-full">
-                          {log.hoursLogged} hours
+                          {log.hours || log.hoursLogged} hours
                         </span>
                       </td>
                       <td className="p-3.5 text-slate-500 italic font-semibold">
-                        "{log.description}"
+                        "{log.comment || log.description}"
                       </td>
                       <td className="p-3.5 text-slate-500 text-right whitespace-nowrap font-bold">
                         {new Date(log.createdAt).toLocaleDateString()}

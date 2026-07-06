@@ -438,6 +438,29 @@ app.get("/api/projects/:id/issues", authenticateToken, async (req: any, res: any
   }
 });
 
+// Get Worklogs for a project (used by Reports/Insights)
+app.get("/api/projects/:id/worklogs", authenticateToken, async (req: any, res: any) => {
+  try {
+    const issues = await IssueModel.find({ projectId: req.params.id }).select('id key summary').lean();
+    const issueIds = issues.map(i => i.id);
+    
+    const worklogs = await WorkLogModel.find({ issueId: { $in: issueIds } }).sort({ createdAt: -1 }).lean();
+    
+    const enrichedWorklogs = worklogs.map((wl: any) => {
+      const issue = issues.find(i => i.id === wl.issueId);
+      return {
+        ...wl,
+        issueKey: issue?.key || 'Unknown',
+        issueSummary: issue?.summary || 'Unknown Issue'
+      };
+    });
+    
+    res.json(enrichedWorklogs);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create Issue
 app.post("/api/projects/:id/issues", authenticateToken, async (req: any, res: any) => {
   try {
