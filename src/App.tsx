@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { io } from "socket.io-client";
 import { 
   Folder, Calendar, Sparkles, BarChart2, CheckSquare, Plus, ChevronDown, 
   Users, Activity, HelpCircle, LayoutGrid, Database, BookOpen, Settings, X, MessageSquare, Layout, Menu
@@ -57,6 +58,26 @@ export default function App() {
 
   // Loading indicator for mounting
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Real-time synchronization
+  useEffect(() => {
+    if (!activeProjectId) return;
+    
+    const socket = io();
+    
+    const handleUpdate = (data: any) => {
+      if (data.projectId === activeProjectId) {
+        fetchSprintsAndIssues(activeProjectId);
+      }
+    };
+    
+    socket.on("project_updated", handleUpdate);
+    
+    return () => {
+      socket.off("project_updated", handleUpdate);
+      socket.disconnect();
+    };
+  }, [activeProjectId]);
 
   // Check auth status on mount
   useEffect(() => {

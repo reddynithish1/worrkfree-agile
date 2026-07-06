@@ -277,7 +277,7 @@ app.post("/api/projects/join", authenticateToken, async (req: any, res: any) => 
     if (!inviteCode) return res.status(400).json({ error: "Invite code is required" });
     
     const project = await joinProject(inviteCode, userId);
-    joinUserToProject(userId, project.id);
+    await joinUserToProject(userId, project.id);
     
     res.json(project);
   } catch (error: any) {
@@ -350,6 +350,13 @@ app.delete("/api/projects/:id", authenticateToken, async (req: any, res: any) =>
 });
 
 // ---------- AGILE ENDPOINTS ---------- //
+// Helper to emit project updates
+function emitProjectUpdate(projectId) {
+  if (projectId) {
+    io.emit("project_updated", { projectId });
+  }
+}
+
 
 // Get Sprints for a project
 app.get("/api/projects/:id/sprints", authenticateToken, async (req: any, res: any) => {
@@ -374,6 +381,7 @@ app.post("/api/projects/:id/sprints", authenticateToken, async (req: any, res: a
       endDate,
       status: status || "future"
     });
+    emitProjectUpdate(req.params.id);
     res.json(sprint);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -388,6 +396,7 @@ app.patch("/api/sprints/:id", authenticateToken, async (req: any, res: any) => {
       { $set: req.body },
       { new: true }
     );
+    if (sprint) emitProjectUpdate(sprint.projectId);
     res.json(sprint);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -422,6 +431,7 @@ app.post("/api/sprints/:id/complete", authenticateToken, async (req: any, res: a
       await nextSprint.save();
     }
 
+    emitProjectUpdate(sprint.projectId);
     res.json({ success: true, message: "Sprint completed" });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -508,6 +518,7 @@ app.patch("/api/issues/:id", authenticateToken, async (req: any, res: any) => {
       { $set: req.body },
       { new: true }
     );
+    emitProjectUpdate(req.params.id);
     res.json(issue);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
