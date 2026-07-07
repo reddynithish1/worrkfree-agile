@@ -32,9 +32,22 @@ const io = new SocketIOServer(httpServer, {
 const PORT = 3000;
 
 // Socket.io integration
-io.on("connection", async (socket) => {
-  socket.on("typing", (userName) => {
-    socket.broadcast.emit("user_typing", userName);
+io.on("connection", (socket) => {
+  socket.on('join_project_room', (projectId) => {
+    socket.join(projectId);
+    console.log('User joined room:', projectId);
+  });
+
+  socket.on('typing_start', (data) => {
+    socket.to(data.projectId).emit('user_typing', { userName: data.userName });
+  });
+
+  socket.on('typing_stop', (data) => {
+    socket.to(data.projectId).emit('user_stopped_typing', { userName: data.userName });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
   });
 });
 
@@ -546,9 +559,12 @@ app.post("/api/issues/:id/worklogs", authenticateToken, async (req: any, res: an
 });
 
 // Get Chat Messages for a project
-app.get("/api/projects/:id/chat", authenticateToken, async (req: any, res: any) => {
+app.get("/api/projects/:projectId/chat", authenticateToken, async (req: any, res: any) => {
   try {
-    const messages = await getMessages(req.params.id);
+    const messages = await ChatMessageModel
+      .find({ projectId: req.params.projectId })
+      .sort({ timestamp: 1 })
+      .limit(100);
     res.json(messages);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -556,33 +572,37 @@ app.get("/api/projects/:id/chat", authenticateToken, async (req: any, res: any) 
 });
 
 // Create new chat message
-app.post("/api/projects/:id/chat", authenticateToken, async (req: any, res: any) => {
+app.post("/api/projects/:projectId/chat", authenticateToken, async (req: any, res: any) => {
   try {
-    const projectId = req.params.id;
+    const projectId = req.params.projectId;
     const { message } = req.body;
     
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: "Valid message string is required" });
     }
 
-    const msg = {
-      id: Date.now().toString() + Math.random().toString(36).substring(7),
+    // Fetch user details from DB since token only has id and email
+    const users = await getUsers();
+    const user = users.find((u: any) => u.id === req.user.id);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    const saved = await ChatMessageModel.create({
       projectId,
-      userId: req.user.id,
-      userName: req.user.displayName,
-      userAvatar: req.user.avatar || "",
+      userId: user.id,
+      userName: user.displayName,
+      userAvatar: user.avatar || "",
       message: message.trim(),
-      timestamp: new Date().toISOString()
-    };
+      timestamp: new Date()
+    });
 
-    // Save to MongoDB first
-    await saveMessage(msg);
-    console.log('Chat message saved to MongoDB:', msg.id);
+    console.log('Chat message saved to MongoDB:', saved._id);
 
-    // Then emit via Socket.io to all clients
-    io.emit("new_message", msg);
+    // Emit to socket room
+    io.to(projectId).emit('new_chat_message', saved);
     
-    res.json(msg);
+    res.json(saved);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

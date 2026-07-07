@@ -21,61 +21,64 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [inputValue, setInputValue] = useState('');
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const socket = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isOpen || !projectId) return;
 
-    // Fetch initial chat history from the backend
-    fetch(`/api/projects/${projectId}/chat`, { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => {
-        setMessages(data || []);
-        scrollToBottom();
-      })
-      .catch(err => console.error("Error fetching chat history", err));
+    socket.current = io(window.location.origin, {
+      withCredentials: true
+    });
+    
+    socket.current.emit('join_project_room', projectId);
 
-    const newSocket = io();
-    setSocket(newSocket);
-
-    newSocket.on('new_message', (msg: ChatMessage) => {
-      // Only process messages for the current project
-      if (msg.projectId === projectId) {
-        setMessages((prev) => {
-          // Prevent duplicates if we already added it optimistically or from API
-          if (prev.some(m => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-        scrollToBottom();
-      }
+    socket.current.on('new_chat_message', (message: ChatMessage) => {
+      setMessages((prev) => {
+        if (prev.some(m => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
+      scrollToBottom();
     });
 
-    newSocket.on('user_typing', (userName: string) => {
-      if (userName === user.name) return;
-      
-      setTypingUsers((prev) => {
-        const next = new Set(prev);
-        next.add(userName);
-        return next;
-      });
+    socket.current.on('user_typing', (data: { userName: string }) => {
+      if (data.userName === user.name) return;
+      setTypingUser(data.userName);
+    });
 
-      setTimeout(() => {
-        setTypingUsers((prev) => {
-          const next = new Set(prev);
-          next.delete(userName);
-          return next;
-        });
-      }, 3000);
+    socket.current.on('user_stopped_typing', (data: { userName: string }) => {
+      if (data.userName === user.name) return;
+      setTypingUser(null);
     });
 
     return () => {
-      newSocket.disconnect();
+      if (socket.current) {
+        socket.current.disconnect();
+      }
     };
-  }, [user.name, isOpen, projectId]);
+  }, [projectId, isOpen, user.name]);
+
+  useEffect(() => {
+    if (!isOpen || !projectId) return;
+
+    const loadMessages = async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/chat`, {
+          credentials: 'omit',
+        });
+        const data = await res.json();
+        setMessages(data || []);
+        scrollToBottom();
+      } catch (err) {
+        console.error("Error fetching chat history", err);
+      }
+    };
+    
+    loadMessages();
+  }, [projectId, isOpen]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -83,43 +86,65 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     }, 100);
   };
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputText.trim() || !projectId) return;
-
-    const messageText = inputText.trim();
-    setInputText("");
-
+  const sendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputValue.trim() || !projectId) return;
+    
+    const messageText = inputValue.trim();
+    setInputValue('');
+    
     try {
       const res = await fetch(`/api/projects/${projectId}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        credentials: 'omit',
         body: JSON.stringify({ message: messageText })
       });
-
+      
       if (!res.ok) {
         throw new Error("Failed to send message");
       }
-      
+
       const savedMsg = await res.json();
       
-      // Optimistically add it to our own screen (socket will ignore duplicate)
       setMessages((prev) => {
         if (prev.some(m => m.id === savedMsg.id)) return prev;
         return [...prev, savedMsg];
       });
       scrollToBottom();
+
+      if (socket.current) {
+        socket.current.emit('typing_stop', {
+          projectId,
+          userName: user.name
+        });
+      }
     } catch (error) {
-      console.error("Error sending message:", error);
-      // Optional: you could restore inputText here if it failed
+      console.error('Send message failed:', error);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputText(e.target.value);
-
-    if (socket) {
-      socket.emit('typing', user.name);
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    
+    if (socket.current) {
+      socket.current.emit('typing_start', {
+        projectId,
+        userName: user.name
+      });
+      
+      if (typingTimeout.current) clearTimeout(typingTimeout.current);
+      
+      typingTimeout.current = setTimeout(() => {
+        if (socket.current) {
+          socket.current.emit('typing_stop', {
+            projectId,
+            userName: user.name
+          });
+        }
+      }, 3000);
     }
   };
 
@@ -164,7 +189,7 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
                       )}
                     </div>
                   ) : (
-                    <div className="w-7 h-7 flex-shrink-0" /> // Spacer for alignment
+                    <div className="w-7 h-7 flex-shrink-0" />
                   )}
 
                   {/* Message Bubble */}
@@ -177,9 +202,9 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
           })
         )}
         
-        {typingUsers.size > 0 && (
+        {typingUser && (
           <div className="text-xs text-slate-500 italic ml-9">
-            {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+            {typingUser} is typing...
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -187,17 +212,17 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
 
       {/* Input Area */}
       <div className="p-4 bg-slate-50/80 border-t border-slate-200">
-        <form onSubmit={handleSend} className="flex gap-2">
+        <form onSubmit={sendMessage} className="flex gap-2">
           <input
             type="text"
-            value={inputText}
-            onChange={handleInputChange}
+            value={inputValue}
+            onChange={handleTyping}
             placeholder="Type a message..."
             className="flex-1 px-4 py-2 rounded-full border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
           <button
             type="submit"
-            disabled={!inputText.trim()}
+            disabled={!inputValue.trim()}
             className="p-2 rounded-full bg-blue-600 text-white disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
           >
             <Send className="w-4 h-4" />
