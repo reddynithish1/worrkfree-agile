@@ -15,7 +15,7 @@ import {
 } from "./src/db/projectDb";
 import { getMessages, saveMessage } from "./src/db/chatDb";
 import { connectDB } from "./src/db/mongoose";
-import { SprintModel, IssueModel, WorkLogModel } from "./src/db/models";
+import { SprintModel, IssueModel, WorkLogModel, ChatMessageModel } from "./src/db/models";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
 import { Server as SocketIOServer } from "socket.io";

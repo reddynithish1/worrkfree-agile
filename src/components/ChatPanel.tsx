@@ -69,8 +69,11 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
         const res = await fetch(`/api/projects/${projectId}/chat`, {
           credentials: 'omit',
         });
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
-        setMessages(data || []);
+        setMessages(Array.isArray(data) ? data : []);
         scrollToBottom();
       } catch (err) {
         console.error("Error fetching chat history", err);
