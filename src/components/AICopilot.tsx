@@ -62,11 +62,16 @@ export default function AICopilot({
       if (data.issues && Array.isArray(data.issues)) {
         setProposedIssues(data.issues);
       } else {
-        alert(data.error || "Failed to generate roadmap plan.");
+        // BUG-009 FIX: Show clean user-friendly error, never raw JSON
+        const friendlyError = data.error?.includes("API") || data.error?.includes("key") || data.error?.includes("quota")
+          ? "AI is temporarily unavailable. Please check your API key or try again later."
+          : (data.error || "Failed to generate roadmap. Please try again.");
+        alert(friendlyError);
       }
     } catch (error: any) {
       console.error(error);
-      alert("Error calling server AI: " + error.message);
+      // BUG-009 FIX: Never show raw error.message to users
+      alert("AI is temporarily unavailable. Please try again in a moment.");
     } finally {
       setLoading(false);
       setLoadingStep("");

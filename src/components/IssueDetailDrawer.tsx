@@ -172,9 +172,9 @@ export default function IssueDetailDrawer({
       } else {
         alert(data.error || "Failed to generate description");
       }
-    } catch (err: any) {
+      } catch (err: any) {
       console.error(err);
-      alert("Error: " + err.message);
+      alert("AI is temporarily unavailable. Please try again.");
     } finally {
       setAiLoading(prev => ({ ...prev, desc: false }));
     }
@@ -196,7 +196,7 @@ export default function IssueDetailDrawer({
       }
     } catch (err: any) {
       console.error(err);
-      alert("Error: " + err.message);
+      alert("AI is temporarily unavailable. Please try again.");
     } finally {
       setAiLoading(prev => ({ ...prev, estimate: false }));
     }
@@ -224,7 +224,7 @@ export default function IssueDetailDrawer({
       }
     } catch (err: any) {
       console.error(err);
-      alert("Error: " + err.message);
+      alert("AI is temporarily unavailable. Please try again.");
     } finally {
       setAiLoading(prev => ({ ...prev, breakdown: false }));
     }

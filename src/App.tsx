@@ -48,6 +48,11 @@ export default function App() {
   const [newProjName, setNewProjName] = useState("");
   const [newProjKey, setNewProjKey] = useState("");
   const [newProjDesc, setNewProjDesc] = useState("");
+  const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
+
+  // BUG-003 FIX: Invite code reveal modal state
+  const [inviteCodeModal, setInviteCodeModal] = useState<{ projectName: string; inviteCode: string } | null>(null);
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   // Mobile Sidebar State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -326,12 +331,17 @@ export default function App() {
           status: "future"
         })
       });
-      // Will be fetched automatically by the activeProjectId effect
 
       setNewProjName("");
       setNewProjKey("");
       setNewProjDesc("");
+      setKeyManuallyEdited(false);
       setIsNewProjectOpen(false);
+
+      // BUG-003 FIX: Show invite code immediately after project creation
+      if (data.inviteCode) {
+        setInviteCodeModal({ projectName: data.name, inviteCode: data.inviteCode });
+      }
     } catch (err) {
       console.error(err);
     }
@@ -377,8 +387,17 @@ export default function App() {
   };
 
   if (isAuthLoading || (currentUser && !isInitialized)) {
-    // Return completely blank for silent session restore
-    return <div className="h-screen w-screen bg-slate-50"></div>;
+    // BUG-002 FIX: Show branded loading screen instead of blank white page
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50">
+        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-extrabold shadow-xl shadow-indigo-300/40 mb-5">
+          W
+        </div>
+        <div className="w-8 h-8 border-[3px] border-indigo-100 border-t-indigo-500 rounded-full animate-spin mb-4" />
+        <p className="text-sm font-semibold text-indigo-500 tracking-wide">Loading WorrkFree...</p>
+        <p className="text-xs text-slate-400 mt-1">Restoring your session</p>
+      </div>
+    );
   }
 
   if (!currentUser) {
@@ -789,12 +808,12 @@ export default function App() {
                     value={newProjName}
                     onChange={(e) => {
                       setNewProjName(e.target.value);
-                      // Autofill Key if empty
-                      if (e.target.value.length >= 2 && !newProjKey) {
-                        const words = e.target.value.split(" ");
+                      // BUG-007 FIX: Auto-update key whenever name changes, unless user manually edited the key
+                      if (!keyManuallyEdited) {
+                        const words = e.target.value.trim().split(/\s+/);
                         const keySuggestion = words.length > 1
-                          ? (words[0][0] + words[1][0]).toUpperCase()
-                          : e.target.value.substring(0, 3).toUpperCase();
+                          ? words.slice(0, 3).map((w: string) => w[0]).join('').toUpperCase()
+                          : e.target.value.substring(0, 4).toUpperCase();
                         setNewProjKey(keySuggestion);
                       }
                     }}
@@ -813,7 +832,10 @@ export default function App() {
                     maxLength={5}
                     placeholder="e.g. BILL"
                     value={newProjKey}
-                    onChange={(e) => setNewProjKey(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      setKeyManuallyEdited(true);
+                      setNewProjKey(e.target.value.toUpperCase());
+                    }}
                     className="w-full px-3.5 py-2 text-sm glass-input rounded-xl font-bold"
                   />
                   <p className="text-[10px] text-slate-500 mt-1 font-semibold">
@@ -900,6 +922,59 @@ export default function App() {
                   <button type="submit" disabled={isJoining} className="px-5 py-2 text-sm font-semibold glass-button-primary rounded-full disabled:opacity-50">{isJoining ? 'Joining...' : 'Join'}</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* BUG-003 FIX: Invite Code Reveal Modal — shown immediately after project creation */}
+        {inviteCodeModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div className="glass-panel rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4 text-center">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
+                  <span className="text-2xl">🎉</span>
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900 mb-1">Project Created!</h3>
+                <p className="text-sm text-slate-500">Share this invite code with your teammates so they can join <strong>{inviteCodeModal.projectName}</strong></p>
+              </div>
+
+              {/* Invite Code Display */}
+              <div className="px-6 pb-4">
+                <div className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-5 text-center">
+                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Invite Code</p>
+                  <p className="text-3xl font-extrabold text-indigo-600 tracking-widest font-mono">{inviteCodeModal.inviteCode}</p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(inviteCodeModal.inviteCode);
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2500);
+                  }}
+                  className={`w-full mt-3 py-3 rounded-2xl font-bold text-sm transition-all ${
+                    inviteCopied
+                      ? 'bg-green-500 text-white'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  }`}
+                >
+                  {inviteCopied ? '✅ Copied to clipboard!' : '📋 Copy Invite Code'}
+                </button>
+
+                <p className="text-xs text-slate-400 text-center mt-3">
+                  Teammates can join via the <strong>"Join Project"</strong> button on their sidebar
+                </p>
+              </div>
+
+              {/* Close */}
+              <div className="px-6 pb-6">
+                <button
+                  onClick={() => { setInviteCodeModal(null); setInviteCopied(false); }}
+                  className="w-full py-2.5 rounded-2xl font-semibold text-sm text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         )}

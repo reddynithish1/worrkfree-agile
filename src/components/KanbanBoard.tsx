@@ -334,15 +334,26 @@ export default function KanbanBoard({
                             {issue.summary}
                           </h4>
 
-                          {/* Story Points & Assignee */}
+                          {/* Story Points, Hours & Assignee */}
                           <div className="flex items-center justify-between pt-2.5 border-t border-slate-900/10">
-                            {issue.storyPoints ? (
-                              <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-900/5 border border-slate-900/10 text-slate-500 rounded-full" title="Story Points">
-                                {issue.storyPoints}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-slate-500 italic">No SP</span>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {issue.storyPoints ? (
+                                <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-900/5 border border-slate-900/10 text-slate-500 rounded-full" title="Story Points">
+                                  {issue.storyPoints}sp
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-500 italic">No SP</span>
+                              )}
+                              {/* BUG-006 FIX: Show logged hours badge on card */}
+                              {issue.workLogs && issue.workLogs.length > 0 && (
+                                <span
+                                  className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 border border-blue-100 text-blue-500 rounded-full flex items-center gap-0.5"
+                                  title={`${issue.workLogs.reduce((s: number, w: any) => s + (w.hours || 0), 0)}h logged`}
+                                >
+                                  ⏱ {issue.workLogs.reduce((s: number, w: any) => s + (w.hours || 0), 0)}h
+                                </span>
+                              )}
+                            </div>
 
                             <div className="flex items-center gap-2">
                               {issue.subtasks.length > 0 && (
@@ -359,6 +370,7 @@ export default function KanbanBoard({
                               />
                             </div>
                           </div>
+
 
                           {/* Quick state-selector overlay (visible on hover) for easy access */}
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all flex gap-1 bg-white/80 p-1 rounded-xl shadow-md border border-slate-900/10 backdrop-blur-md">
