@@ -15,17 +15,27 @@ interface ChatMessage {
 interface ChatPanelProps {
   user: { id: string; name: string; avatar?: string };
   projectId: string;
+  projectMembers?: { id: string; name: string; avatar?: string }[];
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPanelProps) {
+export default function ChatPanel({ user, projectId, projectMembers = [], isOpen, onClose }: ChatPanelProps) {
+  const [activeChannel, setActiveChannel] = useState<'project' | string>('project');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const socket = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Determine the effective ID for the current chat room (either project ID or DM ID)
+  const getRoomId = () => {
+    if (activeChannel === 'project') return projectId;
+    return `dm_${[user.id, activeChannel].sort().join('_')}`;
+  };
+
+  const currentRoomId = getRoomId();
 
   useEffect(() => {
     if (!isOpen || !projectId) return;
@@ -34,14 +44,17 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
       withCredentials: true
     });
     
-    socket.current.emit('join_project_room', projectId);
+    socket.current.emit('join_project_room', currentRoomId);
 
     socket.current.on('new_chat_message', (message: ChatMessage) => {
-      setMessages((prev) => {
-        if (prev.some(m => m.id === message.id)) return prev;
-        return [...prev, message];
-      });
-      scrollToBottom();
+      // Only process messages for the active room
+      if (message.projectId === currentRoomId) {
+        setMessages((prev) => {
+          if (prev.some(m => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+        scrollToBottom();
+      }
     });
 
     socket.current.on('user_typing', (data: { userName: string }) => {
@@ -59,15 +72,15 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
         socket.current.disconnect();
       }
     };
-  }, [projectId, isOpen, user.name]);
+  }, [projectId, isOpen, user.name, currentRoomId]);
 
   useEffect(() => {
     if (!isOpen || !projectId) return;
 
     const loadMessages = async () => {
       try {
-        const res = await fetch(`/api/projects/${projectId}/chat`, {
-          credentials: 'omit',
+        const res = await fetch(`/api/projects/${currentRoomId}/chat`, {
+          credentials: 'include',
         });
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -81,7 +94,7 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     };
     
     loadMessages();
-  }, [projectId, isOpen]);
+  }, [projectId, isOpen, currentRoomId]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -97,12 +110,12 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     setInputValue('');
     
     try {
-      const res = await fetch(`/api/projects/${projectId}/chat`, {
+      const res = await fetch(`/api/projects/${currentRoomId}/chat`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
         },
-        credentials: 'omit',
+        credentials: 'include',
         body: JSON.stringify({ message: messageText })
       });
       
@@ -120,7 +133,7 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
 
       if (socket.current) {
         socket.current.emit('typing_stop', {
-          projectId,
+          projectId: currentRoomId,
           userName: user.name
         });
       }
@@ -134,7 +147,7 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     
     if (socket.current) {
       socket.current.emit('typing_start', {
-        projectId,
+        projectId: currentRoomId,
         userName: user.name
       });
       
@@ -143,7 +156,7 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
       typingTimeout.current = setTimeout(() => {
         if (socket.current) {
           socket.current.emit('typing_stop', {
-            projectId,
+            projectId: currentRoomId,
             userName: user.name
           });
         }
@@ -154,29 +167,76 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 md:inset-auto md:right-0 md:top-0 h-screen w-full md:w-96 glass-sidebar flex flex-col z-50 shadow-2xl md:border-l border-slate-200">
+    <div className="fixed inset-0 md:inset-auto md:right-0 md:top-0 h-screen w-full md:w-[450px] bg-slate-50 flex flex-col z-50 shadow-2xl md:border-l border-slate-200">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50/50">
+      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white shadow-sm z-10">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-blue-600" />
-          <h2 className="font-semibold text-slate-900">Workspace Chat</h2>
+          <MessageSquare className="w-5 h-5 text-indigo-600" />
+          <h2 className="font-bold text-slate-800">Chat</h2>
         </div>
-        <button onClick={onClose} className="p-1 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 transition-colors">
+        <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        {messages.length === 0 ? (
-          <div className="text-center text-slate-500 mt-10">No messages yet. Say hi! 👋</div>
-        ) : (
-          messages.map((msg, index) => {
-            const isMe = msg.userId === user.id;
-            const showHeader = index === 0 || messages[index - 1].userId !== msg.userId;
-            
-            return (
-              <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar for Channels & DMs */}
+        <div className="w-1/3 bg-slate-100 border-r border-slate-200 overflow-y-auto flex flex-col p-2 gap-1">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 px-2 mt-2">Channels</div>
+          <button 
+            onClick={() => setActiveChannel('project')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeChannel === 'project' ? 'bg-indigo-100 text-indigo-800 shadow-sm' : 'text-slate-600 hover:bg-slate-200'}`}
+          >
+            # Project Team
+          </button>
+          
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 px-2 mt-4">Direct Messages</div>
+          {projectMembers.filter(m => m.id !== user.id).map(member => (
+            <button
+              key={member.id}
+              onClick={() => setActiveChannel(member.id)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${activeChannel === member.id ? 'bg-indigo-100 text-indigo-800 shadow-sm' : 'text-slate-600 hover:bg-slate-200'}`}
+            >
+              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-300 flex-shrink-0 flex items-center justify-center">
+                {member.avatar ? <img src={member.avatar} className="w-full h-full object-cover" /> : <User className="w-3 h-3 text-white" />}
+              </div>
+              <span className="truncate">{member.name.split(' ')[0]}</span>
+            </button>
+          ))}
+          {projectMembers.filter(m => m.id !== user.id).length === 0 && (
+            <div className="px-3 text-xs text-slate-400">No other teammates in this project yet.</div>
+          )}
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col bg-white">
+          {/* Active Channel Header */}
+          <div className="p-3 border-b border-slate-100 bg-white/50 backdrop-blur-sm text-sm font-semibold text-slate-700 flex items-center gap-2">
+            {activeChannel === 'project' ? (
+              <># Project Team</>
+            ) : (
+              <>
+                <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-300 flex-shrink-0 flex items-center justify-center">
+                  <User className="w-3 h-3 text-white" />
+                </div>
+                {projectMembers.find(m => m.id === activeChannel)?.name || 'Teammate'}
+              </>
+            )}
+          </div>
+
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-slate-50/50">
+            {messages.length === 0 ? (
+              <div className="text-center text-slate-400 mt-10 text-sm bg-white/80 p-4 rounded-xl mx-auto shadow-sm border border-slate-100">
+                No messages yet. <br/> <span className="font-medium text-slate-600">Start the conversation! 👋</span>
+              </div>
+            ) : (
+              messages.map((msg, index) => {
+                const isMe = msg.userId === user.id;
+                const showHeader = index === 0 || messages[index - 1].userId !== msg.userId;
+                
+                return (
+                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 {showHeader && !isMe && (
                   <span className="text-xs text-slate-500 ml-9 mb-1">{msg.userName}</span>
                 )}
@@ -232,6 +292,8 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
           </button>
         </form>
       </div>
+    </div>
+    </div>
     </div>
   );
 }
