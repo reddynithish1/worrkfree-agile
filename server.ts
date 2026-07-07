@@ -42,7 +42,7 @@ io.on("connection", async (socket) => {
       projectId: data.projectId,
       userId: data.userId,
       userName: data.userName,
-      userAvatar: data.userAvatar,
+      userAvatar: data.userAvatar || "",
       message: data.message,
       timestamp: new Date().toISOString()
     };

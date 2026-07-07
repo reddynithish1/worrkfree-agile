@@ -31,7 +31,7 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     if (!isOpen || !projectId) return;
 
     // Fetch initial chat history from the backend
-    fetch(`/api/projects/${projectId}/chat`)
+    fetch(`/api/projects/${projectId}/chat`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setMessages(data || []);

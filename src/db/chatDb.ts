@@ -12,12 +12,14 @@ export interface ChatMessage {
 
 export async function getMessages(projectId: string): Promise<ChatMessage[]> {
   try {
-    // Fetch last 50 messages and sort by timestamp
-    const messages = await ChatMessageModel.find({ projectId })
-      .sort({ timestamp: 1 })
+    // Fetch last 50 messages by sorting descending, then reverse for chronological order
+    let messages = await ChatMessageModel.find({ projectId })
+      .sort({ timestamp: -1 })
       .limit(50)
       .lean();
       
+    messages = messages.reverse();
+
     return messages.map((m: any) => ({
       id: m.id,
       projectId: m.projectId,
