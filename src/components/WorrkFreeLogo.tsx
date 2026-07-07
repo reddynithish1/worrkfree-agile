@@ -6,8 +6,8 @@ interface WorrkFreeLogoProps {
 
 export default function WorrkFreeLogo({ className = "" }: WorrkFreeLogoProps) {
   return (
-    <div className={`shrink-0 flex items-center justify-center ${className}`} style={{ width: 36, height: 36 }}>
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div className={`shrink-0 flex items-center justify-center min-w-[36px] min-h-[36px] w-9 h-9 ${className}`}>
+      <svg width="100%" height="100%" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="bgGradient" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
             <stop stopColor="#4F46E5" />
