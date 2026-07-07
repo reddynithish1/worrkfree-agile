@@ -64,6 +64,9 @@ export default function App() {
   // Loading indicator for mounting
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Project Members State
+  const [projectMembers, setProjectMembers] = useState<User[]>([]);
+
   // Real-time synchronization
   useEffect(() => {
     if (!activeProjectId) return;
@@ -128,15 +131,19 @@ export default function App() {
   // Fetch Sprints and Issues for active project
   const fetchSprintsAndIssues = async (projectId: string) => {
     try {
-      const [sprintsRes, issuesRes] = await Promise.all([
+      const [sprintsRes, issuesRes, membersRes] = await Promise.all([
         fetch(`/api/projects/${projectId}/sprints`),
-        fetch(`/api/projects/${projectId}/issues`)
+        fetch(`/api/projects/${projectId}/issues`),
+        fetch(`/api/projects/${projectId}/members`)
       ]);
       if (sprintsRes.ok) {
         setSprints(await sprintsRes.json());
       }
       if (issuesRes.ok) {
         setIssues(await issuesRes.json());
+      }
+      if (membersRes.ok) {
+        setProjectMembers(await membersRes.json());
       }
     } catch (e) {
       console.error("Error fetching project data", e);
@@ -149,6 +156,7 @@ export default function App() {
     } else {
       setSprints([]);
       setIssues([]);
+      setProjectMembers([]);
     }
   }, [activeProjectId]);
 
@@ -711,6 +719,7 @@ export default function App() {
                   project={currentProject}
                   activeSprint={activeSprint}
                   issues={issues}
+                  projectMembers={projectMembers}
                   onUpdateIssueStatus={handleUpdateIssueStatus}
                   onOpenIssueDetail={(issue) => setSelectedIssueId(issue.id)}
                   onCreateIssue={handleCreateIssue}
@@ -722,6 +731,7 @@ export default function App() {
                   project={currentProject}
                   sprints={sprints}
                   issues={issues}
+                  projectMembers={projectMembers}
                   onMoveIssueToSprint={handleMoveIssueToSprint}
                   onUpdateIssueStatus={handleUpdateIssueStatus}
                   onOpenIssueDetail={(issue) => setSelectedIssueId(issue.id)}
@@ -769,7 +779,8 @@ export default function App() {
               <IssueDetailDrawer
                 issue={selectedIssue}
                 sprints={sprints}
-                isOpen={true}
+                projectMembers={projectMembers}
+                isOpen={!!selectedIssueId}
                 onClose={() => setSelectedIssueId(null)}
                 onUpdateIssue={handleUpdateIssue}
                 onDeleteIssue={handleDeleteIssue}

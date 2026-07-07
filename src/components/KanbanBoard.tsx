@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { Issue, IssueStatus, IssueType, IssuePriority, Project, Sprint, Comment } from "../types";
+import React, { useState, useEffect } from "react";
+import { Issue, IssueStatus, IssueType, IssuePriority, Project, Sprint, Comment, User } from "../types";
 import { 
   Search, Plus, Sparkles, AlertCircle, CheckSquare, Bug, Bookmark, 
-  Layers, ArrowUp, ArrowDown, ShieldAlert, MoreHorizontal, User, HelpCircle, X
+  Layers, ArrowUp, ArrowDown, ShieldAlert, MoreHorizontal, HelpCircle, X,
+  User as UserIcon
 } from "lucide-react";
-import { SEED_USERS } from "../initialData";
 
 interface KanbanBoardProps {
   project: Project;
   activeSprint: Sprint | null;
   issues: Issue[];
+  projectMembers: User[];
   onUpdateIssueStatus: (issueId: string, newStatus: IssueStatus) => void;
   onOpenIssueDetail: (issue: Issue) => void;
   onCreateIssue: (issueData: Partial<Issue>) => void;
@@ -21,6 +22,7 @@ export default function KanbanBoard({
   project,
   activeSprint,
   issues,
+  projectMembers,
   onUpdateIssueStatus,
   onOpenIssueDetail,
   onCreateIssue,
@@ -36,8 +38,20 @@ export default function KanbanBoard({
   const [quickSummary, setQuickSummary] = useState("");
   const [quickType, setQuickType] = useState<IssueType>("Story");
   const [quickPriority, setQuickPriority] = useState<IssuePriority>("Medium");
-  const [quickAssignee, setQuickAssignee] = useState(SEED_USERS[3]); // Default to Nithish
+  const [quickAssignee, setQuickAssignee] = useState<any>(null); // Wait for projectMembers
   const [quickPoints, setQuickPoints] = useState(3);
+
+  // Set default assignee when members load or modal opens
+  useEffect(() => {
+    if (projectMembers.length > 0 && !quickAssignee) {
+      // Find current user or just default to first member
+      setQuickAssignee({
+        name: projectMembers[0].displayName,
+        avatar: projectMembers[0].avatar,
+        email: projectMembers[0].email
+      });
+    }
+  }, [projectMembers, isQuickCreateOpen, quickAssignee]);
 
   // Drag and drop states
   const [draggedIssueId, setDraggedIssueId] = useState<string | null>(null);
@@ -219,12 +233,12 @@ export default function KanbanBoard({
             <select
               value={selectedAssignee}
               onChange={(e) => setSelectedAssignee(e.target.value)}
-              className="px-3 py-1.5 text-xs glass-input rounded-xl text-slate-800 cursor-pointer shadow-2xs"
+              className="px-3 py-1.5 text-xs glass-input rounded-xl bg-white focus:outline-none"
             >
-              <option value="All">All People</option>
-              {SEED_USERS.map((user) => (
-                <option key={user.email} value={user.name}>
-                  {user.name}
+              <option value="All">All Assignees</option>
+              {projectMembers.map((member) => (
+                <option key={member.id} value={member.displayName}>
+                  {member.displayName}
                 </option>
               ))}
             </select>
@@ -475,16 +489,22 @@ export default function KanbanBoard({
                     Assignee
                   </label>
                   <select
-                    value={quickAssignee.name}
+                    value={quickAssignee?.name || ''}
                     onChange={(e) => {
-                      const user = SEED_USERS.find(u => u.name === e.target.value);
-                      if (user) setQuickAssignee(user);
+                      const member = projectMembers.find(u => u.displayName === e.target.value);
+                      if (member) {
+                        setQuickAssignee({
+                          name: member.displayName,
+                          avatar: member.avatar,
+                          email: member.email
+                        });
+                      }
                     }}
                     className="w-full px-3 py-2 text-sm glass-input rounded-xl"
                   >
-                    {SEED_USERS.map((user) => (
-                      <option key={user.email} value={user.name}>
-                        {user.name}
+                    {projectMembers.map((member) => (
+                      <option key={member.id} value={member.displayName}>
+                        {member.displayName}
                       </option>
                     ))}
                   </select>

@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { Issue, Sprint, Project, IssueType, IssuePriority, IssueStatus } from "../types";
+import { Issue, Sprint, Project, IssueType, IssuePriority, IssueStatus, User } from "../types";
 import { 
   Play, CheckCircle2, Plus, Calendar, Bookmark, Layers, CheckSquare, Bug,
   ArrowUp, ArrowDown, ShieldAlert, ChevronRight, ChevronDown, Move, Trash
 } from "lucide-react";
-import { SEED_USERS } from "../initialData";
 
 interface BacklogViewProps {
   project: Project;
   sprints: Sprint[];
   issues: Issue[];
+  projectMembers: User[];
   onMoveIssueToSprint: (issueId: string, sprintId: string | null) => void;
   onUpdateIssueStatus: (issueId: string, status: IssueStatus) => void;
   onOpenIssueDetail: (issue: Issue) => void;
@@ -23,6 +23,7 @@ export default function BacklogView({
   project,
   sprints,
   issues,
+  projectMembers,
   onMoveIssueToSprint,
   onUpdateIssueStatus,
   onOpenIssueDetail,
@@ -106,7 +107,11 @@ export default function BacklogView({
       priority: "Medium",
       status: sprintId ? "To Do" : "Backlog",
       storyPoints: 2,
-      assignee: SEED_USERS[3], // Default Nithish
+      assignee: projectMembers.length > 0 ? {
+        name: projectMembers[0].displayName,
+        avatar: projectMembers[0].avatar,
+        email: projectMembers[0].email
+      } : { name: "Unassigned", avatar: "", email: "" },
       description: `### Goal / Context\nDraft for backlog issue: ${newIssueSummary}\n\n*Generate full description inside detailed view.*`,
       comments: [],
       subtasks: [],

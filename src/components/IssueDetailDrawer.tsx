@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Issue, IssueStatus, IssueType, IssuePriority, Sprint, Comment, SubTask, WorkLog } from "../types";
+import { Issue, IssueStatus, IssueType, IssuePriority, Sprint, Comment, SubTask, WorkLog, User } from "../types";
 import { 
   X, Sparkles, Send, Trash, Edit, Check, Eye, Plus, Clock, Play, Calendar,
   Layers, Bookmark, CheckSquare, Bug, ChevronDown, CheckSquare2, FileText
 } from "lucide-react";
-import { SEED_USERS } from "../initialData";
 
 interface IssueDetailDrawerProps {
   issue: Issue | null;
   sprints: Sprint[];
+  projectMembers: User[];
   isOpen: boolean;
   onClose: () => void;
   onUpdateIssue: (updatedIssue: Issue) => void;
@@ -18,6 +18,7 @@ interface IssueDetailDrawerProps {
 export default function IssueDetailDrawer({
   issue,
   sprints,
+  projectMembers,
   isOpen,
   onClose,
   onUpdateIssue,
@@ -565,14 +566,20 @@ export default function IssueDetailDrawer({
             <select
               value={issue.assignee.name}
               onChange={(e) => {
-                const user = SEED_USERS.find(u => u.name === e.target.value);
-                if (user) updateAttribute("assignee", user);
+                const member = projectMembers.find(u => u.displayName === e.target.value);
+                if (member) {
+                  updateAttribute("assignee", {
+                    name: member.displayName,
+                    avatar: member.avatar,
+                    email: member.email
+                  });
+                }
               }}
               className="w-full px-3 py-2 text-xs glass-input rounded-xl font-bold text-slate-800 cursor-pointer shadow-2xs"
             >
-              {SEED_USERS.map((user) => (
-                <option key={user.email} value={user.name}>
-                  {user.name}
+              {projectMembers.map((member) => (
+                <option key={member.id} value={member.displayName}>
+                  {member.displayName}
                 </option>
               ))}
             </select>
