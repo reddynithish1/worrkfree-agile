@@ -48,5 +48,6 @@ export async function saveMessage(msg: ChatMessage): Promise<void> {
     });
   } catch (error) {
     console.error("Error saving message to DB:", error);
+    throw error;
   }
 }

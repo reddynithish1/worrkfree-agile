@@ -45,7 +45,11 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     newSocket.on('new_message', (msg: ChatMessage) => {
       // Only process messages for the current project
       if (msg.projectId === projectId) {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => {
+          // Prevent duplicates if we already added it optimistically or from API
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
         scrollToBottom();
       }
     });
@@ -79,19 +83,36 @@ export default function ChatPanel({ user, projectId, isOpen, onClose }: ChatPane
     }, 100);
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !socket || !projectId) return;
+    if (!inputText.trim() || !projectId) return;
 
-    socket.emit('send_message', {
-      projectId: projectId,
-      userId: user.id,
-      userName: user.name,
-      userAvatar: user.avatar,
-      message: inputText.trim()
-    });
+    const messageText = inputText.trim();
+    setInputText("");
 
-    setInputText('');
+    try {
+      const res = await fetch(`/api/projects/${projectId}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageText })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to send message");
+      }
+      
+      const savedMsg = await res.json();
+      
+      // Optimistically add it to our own screen (socket will ignore duplicate)
+      setMessages((prev) => {
+        if (prev.some(m => m.id === savedMsg.id)) return prev;
+        return [...prev, savedMsg];
+      });
+      scrollToBottom();
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Optional: you could restore inputText here if it failed
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

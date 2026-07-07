@@ -33,25 +33,6 @@ const PORT = 3000;
 
 // Socket.io integration
 io.on("connection", async (socket) => {
-  // We don't send global chat history anymore, the client will fetch it per project.
-
-  socket.on("send_message", async (data) => {
-    // data: { projectId, userId, userName, userAvatar, message }
-    const msg = {
-      id: Date.now().toString() + Math.random().toString(36).substring(7),
-      projectId: data.projectId,
-      userId: data.userId,
-      userName: data.userName,
-      userAvatar: data.userAvatar || "",
-      message: data.message,
-      timestamp: new Date().toISOString()
-    };
-    await saveMessage(msg);
-    // Ideally we should emit only to a project room, but broadcasting globally for now
-    // as per current architecture. Frontend can filter by projectId.
-    io.emit("new_message", msg);
-  });
-
   socket.on("typing", (userName) => {
     socket.broadcast.emit("user_typing", userName);
   });
@@ -569,6 +550,39 @@ app.get("/api/projects/:id/chat", authenticateToken, async (req: any, res: any) 
   try {
     const messages = await getMessages(req.params.id);
     res.json(messages);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new chat message
+app.post("/api/projects/:id/chat", authenticateToken, async (req: any, res: any) => {
+  try {
+    const projectId = req.params.id;
+    const { message } = req.body;
+    
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: "Valid message string is required" });
+    }
+
+    const msg = {
+      id: Date.now().toString() + Math.random().toString(36).substring(7),
+      projectId,
+      userId: req.user.id,
+      userName: req.user.displayName,
+      userAvatar: req.user.avatar || "",
+      message: message.trim(),
+      timestamp: new Date().toISOString()
+    };
+
+    // Save to MongoDB first
+    await saveMessage(msg);
+    console.log('Chat message saved to MongoDB:', msg.id);
+
+    // Then emit via Socket.io to all clients
+    io.emit("new_message", msg);
+    
+    res.json(msg);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
