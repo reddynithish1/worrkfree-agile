@@ -556,7 +556,7 @@ export default function App() {
               {currentProject ? (
                 <div className="relative group px-3 py-2.5 bg-slate-900/5 hover:bg-white/15 rounded-xl shadow-xs border border-slate-900/10 flex items-center justify-between transition-all backdrop-blur-md">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 bg-blue-600/90 rounded font-bold text-xs text-slate-900 flex items-center justify-center shadow-xs">
+                    <div className="min-w-[28px] h-7 px-1.5 bg-blue-600/90 rounded font-bold text-[10px] text-white flex items-center justify-center shadow-xs">
                       {currentProject.key}
                     </div>
                     <div className="min-w-0">
