@@ -892,7 +892,7 @@ export default function App() {
         <ChatPanel 
           user={currentUser} 
           projectId={activeProjectId}
-          projectMembers={currentProject?.members || []}
+          projectMembers={projectMembers}
           isOpen={isChatOpen} 
           onClose={() => setIsChatOpen(false)} 
         />

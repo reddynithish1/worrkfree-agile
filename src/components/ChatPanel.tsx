@@ -15,7 +15,7 @@ interface ChatMessage {
 interface ChatPanelProps {
   user: { id: string; name: string; avatar?: string };
   projectId: string;
-  projectMembers?: { id: string; name: string; avatar?: string }[];
+  projectMembers?: { id: string; displayName?: string; name?: string; avatar?: string }[];
   isOpen: boolean;
   onClose: () => void;
 }
@@ -200,7 +200,7 @@ export default function ChatPanel({ user, projectId, projectMembers = [], isOpen
               <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-300 flex-shrink-0 flex items-center justify-center">
                 {member.avatar ? <img src={member.avatar} className="w-full h-full object-cover" /> : <User className="w-3 h-3 text-white" />}
               </div>
-              <span className="truncate">{member.name.split(' ')[0]}</span>
+              <span className="truncate">{(member.displayName || member.name || 'Teammate').split(' ')[0]}</span>
             </button>
           ))}
           {projectMembers.filter(m => m.id !== user.id).length === 0 && (
@@ -219,7 +219,7 @@ export default function ChatPanel({ user, projectId, projectMembers = [], isOpen
                 <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-300 flex-shrink-0 flex items-center justify-center">
                   <User className="w-3 h-3 text-white" />
                 </div>
-                {projectMembers.find(m => m.id === activeChannel)?.name || 'Teammate'}
+                {(projectMembers.find(m => m.id === activeChannel)?.displayName || projectMembers.find(m => m.id === activeChannel)?.name || 'Teammate')}
               </>
             )}
           </div>
