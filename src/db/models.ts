@@ -204,6 +204,6 @@ const ChatMessageSchema = new Schema<IChatMessage>({
   userAvatar: { type: String },
   message: { type: String, required: true },
   timestamp: { type: String, required: true }
-});
+}, { collection: 'workspace_chats' });
 
 export const ChatMessageModel = (mongoose.models.ChatMessage as mongoose.Model<IChatMessage>) || mongoose.model<IChatMessage>('ChatMessage', ChatMessageSchema);
