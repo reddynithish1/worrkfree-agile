@@ -108,9 +108,9 @@ export default function BacklogView({
       status: sprintId ? "To Do" : "Backlog",
       storyPoints: 2,
       assignee: projectMembers.length > 0 ? {
-        name: projectMembers[0].displayName,
-        avatar: projectMembers[0].avatar,
-        email: projectMembers[0].email
+        name: projectMembers[0].displayName || projectMembers[0].name || "Unassigned",
+        avatar: projectMembers[0].avatar || "",
+        email: projectMembers[0].email || ""
       } : { name: "Unassigned", avatar: "", email: "" },
       description: `### Goal / Context\nDraft for backlog issue: ${newIssueSummary}\n\n*Generate full description inside detailed view.*`,
       comments: [],

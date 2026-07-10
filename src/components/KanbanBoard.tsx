@@ -46,9 +46,9 @@ export default function KanbanBoard({
     if (projectMembers.length > 0 && !quickAssignee) {
       // Find current user or just default to first member
       setQuickAssignee({
-        name: projectMembers[0].displayName,
-        avatar: projectMembers[0].avatar,
-        email: projectMembers[0].email
+        name: projectMembers[0].displayName || projectMembers[0].name || "Unassigned",
+        avatar: projectMembers[0].avatar || "",
+        email: projectMembers[0].email || ""
       });
     }
   }, [projectMembers, isQuickCreateOpen, quickAssignee]);
