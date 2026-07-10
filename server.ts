@@ -589,12 +589,13 @@ app.post("/api/projects/:projectId/chat", authenticateToken, async (req: any, re
     }
 
     const saved = await ChatMessageModel.create({
+      id: Date.now().toString() + Math.random().toString().slice(2, 8),
       projectId,
       userId: user.id,
       userName: user.displayName,
       userAvatar: user.avatar || "",
       message: message.trim(),
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     });
 
     console.log('Chat message saved to MongoDB:', saved._id);
