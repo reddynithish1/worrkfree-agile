@@ -102,7 +102,18 @@ export default function AuthView({ onLogin }: AuthViewProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5 uppercase tracking-wider">Password</label>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 uppercase tracking-wider">Password</label>
+              {isLogin && (
+                <button
+                  type="button"
+                  onClick={() => alert("Forgot password functionality coming soon!")}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <input
               type="password"
               value={password}
