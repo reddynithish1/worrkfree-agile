@@ -128,3 +128,50 @@ export async function removeProjectFromAllUsers(projectId: string) {
     { $pull: { projects: projectId } }
   );
 }
+
+export async function generateResetToken(emailRaw: string): Promise<{ token: string; displayName: string } | null> {
+  const email = emailRaw.trim().toLowerCase();
+  const user = await UserModel.findOne({ email } as any);
+  if (!user) return null;
+
+  // Generate a 6-digit reset code
+  const token = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedToken = await bcrypt.hash(token, 10);
+
+  // Store hashed token with 15-minute expiry
+  user.resetToken = hashedToken;
+  user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+  await user.save();
+
+  return { token, displayName: user.displayName };
+}
+
+export async function resetPassword(emailRaw: string, token: string, newPassword: string): Promise<boolean> {
+  const email = emailRaw.trim().toLowerCase();
+  const user = await UserModel.findOne({ email } as any);
+  if (!user || !user.resetToken || !user.resetTokenExpiry) {
+    throw new Error("No reset request found for this email");
+  }
+
+  // Check expiry
+  if (Date.now() > user.resetTokenExpiry) {
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+    await user.save();
+    throw new Error("Reset code has expired. Please request a new one.");
+  }
+
+  // Verify token
+  const isValid = await bcrypt.compare(token, user.resetToken);
+  if (!isValid) {
+    throw new Error("Invalid reset code");
+  }
+
+  // Set new password and clear token
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  user.resetToken = undefined;
+  user.resetTokenExpiry = undefined;
+  await user.save();
+
+  return true;
+}

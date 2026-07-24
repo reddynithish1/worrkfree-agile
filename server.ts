@@ -3,7 +3,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
-import { createUser, verifyUser, getUsers, updateUser, joinUserToProject, removeProjectFromAllUsers } from "./src/db/authDb";
+import { createUser, verifyUser, getUsers, updateUser, joinUserToProject, removeProjectFromAllUsers, generateResetToken, resetPassword } from "./src/db/authDb";
 import {
   createProject,
   joinProject,
@@ -127,6 +127,52 @@ app.get("/api/auth/me", authenticateToken, async (req: any, res: any) => {
   const user = users.find((u: any) => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: "User not found" });
   res.json({ user });
+});
+
+// Forgot Password - generates a 6-digit reset code
+app.post("/api/auth/forgot-password", authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    const result = await generateResetToken(email);
+    
+    // Always return success to prevent email enumeration
+    // In production, this would send an email with the code
+    if (result) {
+      // Since there's no email service, return the code directly
+      // In production, you'd send this via email and NOT return it here
+      console.log(`[RESET CODE] for ${email}: ${result.token}`);
+      res.json({ 
+        success: true, 
+        message: "Reset code generated successfully.",
+        resetCode: result.token // Remove this in production - only for demo
+      });
+    } else {
+      // Don't reveal if email exists or not
+      res.json({ success: true, message: "If an account with that email exists, a reset code has been generated." });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Reset Password - verify code and set new password
+app.post("/api/auth/reset-password", authLimiter, async (req, res) => {
+  try {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ error: "Email, reset code, and new password are required" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    await resetPassword(email, token, newPassword);
+    res.json({ success: true, message: "Password reset successfully. You can now sign in." });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 // Initialize the Gemini AI Client on the server

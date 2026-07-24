@@ -9,6 +9,8 @@ export interface IUser extends Document {
   avatar: string;
   projects: string[];
   createdAt: string;
+  resetToken?: string;
+  resetTokenExpiry?: number;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -18,7 +20,9 @@ const UserSchema = new Schema<IUser>({
   displayName: { type: String, required: true },
   avatar: { type: String, default: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" },
   projects: { type: [String], default: [] },
-  createdAt: { type: String, required: true }
+  createdAt: { type: String, required: true },
+  resetToken: { type: String, default: undefined },
+  resetTokenExpiry: { type: Number, default: undefined }
 });
 
 export const UserModel = (mongoose.models.User as mongoose.Model<IUser>) || mongoose.model<IUser>('User', UserSchema);
